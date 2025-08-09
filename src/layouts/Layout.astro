@@ -1,0 +1,61 @@
+---
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Marine biology enthusiast, environmental science student, and underwater explorer sharing discoveries from beneath the waves." } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="author" content="Marine Biology Student" />
+    <meta name="keywords" content="marine biology, environmental science, scuba diving, scouting, underwater photography, ocean conservation" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    
+    <!-- Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+    
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+      }
+    </style>
+    
+    <script>
+      // Progressive image loading
+      const images = document.querySelectorAll('img[data-src]');
+      const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement;
+            img.src = img.dataset.src!;
+            img.classList.remove('loading-skeleton');
+            img.classList.add('animate-fade-in');
+            observer.unobserve(img);
+          }
+        });
+      });
+      
+      images.forEach(img => imageObserver.observe(img));
+    </script>
+  </body>
+</html>
