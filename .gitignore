@@ -42,5 +42,5 @@ temp/
 .claude/
 .bmad-core/
 
-# GitHub specific files (optional)
-.github/
+# GitHub specific files (workflows needed for deployment)
+# .github/
