@@ -14,16 +14,16 @@
               <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
             </svg>
           </div>
-          <span class="font-bold text-lg text-ocean-600">Ocean Explorer</span>
+          <span class="font-bold text-lg text-ocean-600">Rithvik Madhan</span>
         </a>
       </div>
 
       <!-- Desktop Navigation -->
       <div class="hidden md:flex items-center space-x-1">
-        <a href="/blog" class="nav-link">Blog</a>
-        <a href="/portfolio" class="nav-link">Portfolio</a>
-        <a href="/achievements" class="nav-link">Achievements</a>
-        <a href="/about" class="nav-link">About</a>
+        <a href="/#blog" class="nav-link">Blog</a>
+        <a href="/#featured-work" class="nav-link">Portfolio</a>
+        <a href="/#achievements" class="nav-link">Achievements</a>
+        <a href="/#intro" class="nav-link">About</a>
         <a href="/contact" class="nav-link">Contact</a>
         
         <!-- Search Button -->
@@ -47,10 +47,10 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu hidden md:hidden pb-4">
       <div class="flex flex-col space-y-2">
-        <a href="/blog" class="nav-link text-base">Blog</a>
-        <a href="/portfolio" class="nav-link text-base">Portfolio</a>
-        <a href="/achievements" class="nav-link text-base">Achievements</a>
-        <a href="/about" class="nav-link text-base">About</a>
+        <a href="/#blog" class="nav-link text-base">Blog</a>
+        <a href="/#featured-work" class="nav-link text-base">Portfolio</a>
+        <a href="/#achievements" class="nav-link text-base">Achievements</a>
+        <a href="/#intro" class="nav-link text-base">About</a>
         <a href="/contact" class="nav-link text-base">Contact</a>
         <button class="nav-link text-base text-left flex items-center space-x-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,8 +64,38 @@
 </header>
 
 <script>
-  // Mobile menu toggle
+  // Smooth scrolling for anchor links
   document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth scrolling behavior for anchor links
+    document.querySelectorAll('a[href^="/#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const targetId = this.getAttribute('href').substring(2); // Remove '/#'
+        const targetElement = document.getElementById(targetId);
+        
+        if (targetElement) {
+          e.preventDefault();
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          
+          // Close mobile menu if open
+          const menu = document.querySelector('.mobile-menu');
+          const button = document.querySelector('.mobile-menu-button');
+          const menuIcon = button?.querySelector('svg');
+          
+          if (menu && !menu.classList.contains('hidden')) {
+            menu.classList.add('hidden');
+            if (menuIcon) {
+              menuIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+            }
+          }
+        }
+      });
+    });
+
+  // Mobile menu toggle
+  
     const button = document.querySelector('.mobile-menu-button');
     const menu = document.querySelector('.mobile-menu');
     const menuIcon = button?.querySelector('svg');

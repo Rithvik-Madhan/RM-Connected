@@ -1,27 +1,27 @@
 ---
 // Blog preview section with category filters
-const categories = ['All', 'Marine Biology', 'Diving', 'Conservation', 'Scouting'];
+const categories = ['All', 'Environmental Science', 'Marine Biology', 'Diving', 'Conservation', 'Scouting'];
 
 const blogPosts = [
   {
     id: 1,
-    title: 'Coral Bleaching in the Caribbean: A Field Study',
-    excerpt: 'Recent diving expeditions have revealed concerning patterns of coral bleaching across multiple reef systems. Here\'s what I discovered...',
-    category: 'Marine Biology',
-    date: '2024-01-15',
-    readTime: '8 min read',
-    image: 'https://images.pexels.com/photos/1631677/pexels-photo-1631677.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
-    tags: ['coral', 'research', 'climate-change']
+    title: 'The True Disparities of Light Pollution',
+    excerpt: 'The silent crisis of light pollution has illuminated my interest in environmental science. From childhood night walks to discovering the impact on human health and wildlife...',
+    category: 'Environmental Science',
+    date: '2025-04-02',
+    readTime: '6 min read',
+    image: 'https://darksky.org/app/uploads/2020/03/light-pollution-sea-turtles-web-824x549-1.jpg',
+    tags: ['light-pollution', 'environmental-science', 'wildlife-conservation']
   },
   {
     id: 2,
-    title: 'Night Diving: Observing Nocturnal Marine Behavior',
-    excerpt: 'The underwater world transforms after dark. Join me on a journey to discover the hidden behaviors of nocturnal marine life...',
+    title: 'Finding Light After Dark',
+    excerpt: 'My first night dive terrified me, but discovering bioluminescence in the dark waters transformed my fear into a lifelong passion for the ocean...',
     category: 'Diving',
     date: '2024-01-10',
-    readTime: '6 min read',
+    readTime: '7 min read',
     image: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
-    tags: ['night-diving', 'behavior', 'photography']
+    tags: ['night-diving', 'bioluminescence', 'personal-story']
   },
   {
     id: 3,
@@ -32,36 +32,6 @@ const blogPosts = [
     readTime: '10 min read',
     image: 'https://images.pexels.com/photos/1645668/pexels-photo-1645668.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
     tags: ['sea-turtles', 'conservation', 'volunteer']
-  },
-  {
-    id: 4,
-    title: 'Environmental Stewardship in Scouting',
-    excerpt: 'How our troop is leading environmental initiatives and teaching younger scouts about marine conservation...',
-    category: 'Scouting',
-    date: '2023-12-28',
-    readTime: '5 min read',
-    image: 'https://images.pexels.com/photos/1445416/pexels-photo-1445416.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
-    tags: ['leadership', 'education', 'environment']
-  },
-  {
-    id: 5,
-    title: 'Microplastics in Marine Food Chains',
-    excerpt: 'A deep dive into how microplastics are affecting marine ecosystems and what we can do to help...',
-    category: 'Marine Biology',
-    date: '2023-12-20',
-    readTime: '12 min read',
-    image: 'https://images.pexels.com/photos/2850290/pexels-photo-2850290.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
-    tags: ['pollution', 'research', 'food-chains']
-  },
-  {
-    id: 6,
-    title: 'Advanced Open Water Certification Journey',
-    excerpt: 'From deep diving to underwater navigation, here\'s what I learned during my Advanced Open Water certification...',
-    category: 'Diving',
-    date: '2023-12-15',
-    readTime: '7 min read',
-    image: 'https://images.pexels.com/photos/1076240/pexels-photo-1076240.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
-    tags: ['certification', 'training', 'skills']
   }
 ];
 ---
@@ -130,7 +100,7 @@ const blogPosts = [
             </div>
             
             <h3 class="font-bold text-xl text-slate-800 mb-3 line-clamp-2 group-hover:text-ocean-600 transition-colors">
-              <a href={`/blog/${post.id}`} class="hover:underline">
+              <a href={post.id === 1 || post.id === 2 ? `/blog/${post.id}` : "#"} class="hover:underline" onclick={post.id === 1 || post.id === 2 ? "" : "alert('Blog post coming soon!')"}>
                 {post.title}
               </a>
             </h3>
@@ -148,8 +118,9 @@ const blogPosts = [
             </div>
             
             <a 
-              href={`/blog/${post.id}`}
+              href={post.id === 1 || post.id === 2 ? `/blog/${post.id}` : "#"}
               class="inline-flex items-center text-ocean-600 hover:text-ocean-700 font-medium text-sm transition-colors"
+              onclick={post.id === 1 || post.id === 2 ? "" : "alert('Blog post coming soon!')"}
             >
               Read More
               <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
