@@ -6,6 +6,8 @@ import mdx from '@astrojs/mdx';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://rithvik-madhan.github.io',
+  base: '/RM-Connected',
   integrations: [
     tailwind(),
     react(),
