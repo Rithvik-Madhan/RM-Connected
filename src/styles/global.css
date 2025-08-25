@@ -36,7 +36,24 @@
   }
   
   .nav-link {
-    @apply text-slate-600 hover:text-ocean-600 px-4 py-2 rounded-md transition-colors duration-200 font-medium;
+    @apply text-slate-600 hover:text-ocean-600 px-4 py-2 rounded-md font-medium relative;
+    transition: color 0.3s ease;
+  }
+  
+  .nav-link::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 6px;
+    left: 50%;
+    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+  }
+  
+  .nav-link:hover::before {
+    width: calc(100% - 2rem);
   }
   
   .nav-link.active {

@@ -20,18 +20,18 @@ const blogPosts = [
     category: 'Diving',
     date: '2024-01-10',
     readTime: '7 min read',
-    image: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
+    image: '/night-diving-light.jpg',
     tags: ['night-diving', 'bioluminescence', 'personal-story']
   },
   {
     id: 3,
-    title: 'Sea Turtle Nesting Season: Conservation Efforts',
-    excerpt: 'Working with local conservation groups to protect sea turtle nesting sites has been an incredible learning experience...',
-    category: 'Conservation',
-    date: '2024-01-05',
-    readTime: '10 min read',
-    image: 'https://images.pexels.com/photos/1645668/pexels-photo-1645668.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
-    tags: ['sea-turtles', 'conservation', 'volunteer']
+    title: 'A Day in the Life at Camp Emerald Bay - Advanced Open Water Diving Certification at 14',
+    excerpt: 'My first day at Camp Emerald Bay was filled with anticipation, underwater navigation, and discovering the alien-like kelp forests beneath the surface...',
+    category: 'Diving',
+    date: '2024-08-15',
+    readTime: '8 min read',
+    image: '/emerald-bay-diving.jpg',
+    tags: ['camp-emerald-bay', 'diving-certification', 'advanced-open-water', 'personal-story']
   }
 ];
 ---
@@ -100,7 +100,7 @@ const blogPosts = [
             </div>
             
             <h3 class="font-bold text-xl text-slate-800 mb-3 line-clamp-2 group-hover:text-ocean-600 transition-colors">
-              <a href={post.id === 1 || post.id === 2 ? `/blog/${post.id}` : "#"} class="hover:underline" onclick={post.id === 1 || post.id === 2 ? "" : "alert('Blog post coming soon!')"}>
+              <a href={`/blog/${post.id}`} class="hover:underline">
                 {post.title}
               </a>
             </h3>
@@ -118,9 +118,8 @@ const blogPosts = [
             </div>
             
             <a 
-              href={post.id === 1 || post.id === 2 ? `/blog/${post.id}` : "#"}
+              href={`/blog/${post.id}`}
               class="inline-flex items-center text-ocean-600 hover:text-ocean-700 font-medium text-sm transition-colors"
-              onclick={post.id === 1 || post.id === 2 ? "" : "alert('Blog post coming soon!')"}
             >
               Read More
               <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
