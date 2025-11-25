@@ -1,6 +1,6 @@
 ---
 // Blog preview section with category filters
-const categories = ['All', 'Environmental Science', 'Marine Biology', 'Diving', 'Conservation', 'Scouting'];
+const categories = ['All', 'Environmental Science', 'Marine Biology', 'Diving', 'Conservation', 'Scouting', 'Backpacking'];
 
 const blogPosts = [
   {
@@ -9,29 +9,44 @@ const blogPosts = [
     excerpt: 'The silent crisis of light pollution has illuminated my interest in environmental science. From childhood night walks to discovering the impact on human health and wildlife...',
     category: 'Environmental Science',
     date: '2025-04-02',
-    readTime: '6 min read',
     image: 'https://darksky.org/app/uploads/2020/03/light-pollution-sea-turtles-web-824x549-1.jpg',
     tags: ['light-pollution', 'environmental-science', 'wildlife-conservation']
   },
   {
     id: 2,
     title: 'Finding Light After Dark',
-    excerpt: 'My first night dive terrified me, but discovering bioluminescence in the dark waters transformed my fear into a lifelong passion for the ocean...',
+    excerpt: 'My first night dive terrified me, but discovering bioluminescence in the dark depths changed my perspective on fear and beauty forever.',
     category: 'Diving',
     date: '2024-01-10',
-    readTime: '7 min read',
     image: '/night-diving-light.jpg',
     tags: ['night-diving', 'bioluminescence', 'personal-story']
   },
   {
     id: 3,
-    title: 'A Day in the Life at Camp Emerald Bay - Advanced Open Water Diving Certification at 14',
-    excerpt: 'My first day at Camp Emerald Bay was filled with anticipation, underwater navigation, and discovering the alien-like kelp forests beneath the surface...',
+    title: 'A Day in the Life at Camp Emerald Bay - Advanced Open Water',
+    excerpt: 'My first day at Camp Emerald Bay was filled with anticipation, underwater navigation, and taking the next step in my diving journey.',
     category: 'Diving',
     date: '2024-08-15',
-    readTime: '8 min read',
     image: '/emerald-bay-diving.jpg',
     tags: ['camp-emerald-bay', 'diving-certification', 'advanced-open-water', 'personal-story']
+  },
+  {
+    id: 4,
+    title: 'My First Backpacking Trip: Tips and Tricks',
+    excerpt: 'I recently went backpacking for the first time in Sequoia, and boy, did I learn a lot. Here is a detailed summary of everything I learned about gear, prep, and the experience.',
+    category: 'Backpacking',
+    date: '2025-11-24',
+    image: '/sequoia-backpacking-cover.jpg',
+    tags: ['backpacking', 'sequoia', 'hiking-gear', 'first-time']
+  },
+  {
+    id: 5,
+    title: 'My Scouting Journey',
+    excerpt: 'Scouting is still a new journey for me, but it already feels like home… like something I was always meant to be a part of.',
+    category: 'Scouting',
+    date: '2025-11-24',
+    image: '/scouting-journey-cover.jpg',
+    tags: ['scouting', 'adventure', 'outdoors', 'personal-growth']
   }
 ];
 ---
@@ -87,16 +102,8 @@ const blogPosts = [
           </div>
           
           <div class="p-6">
-            <div class="flex items-center text-sm text-slate-500 mb-3">
-              <time datetime={post.date}>
-                {new Date(post.date).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </time>
-              <span class="mx-2">•</span>
-              <span>{post.readTime}</span>
+            <div class="flex items-center text-sm text-slate-500 mb-4">
+              <span>{post.date}</span>
             </div>
             
             <h3 class="font-bold text-xl text-slate-800 mb-3 line-clamp-2 group-hover:text-ocean-600 transition-colors">

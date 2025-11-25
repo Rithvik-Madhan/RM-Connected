@@ -1,0 +1,167 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout 
+  title="My Scouting Journey - Rithvik Madhan"
+  description="Scouting is still a new journey for me, but it already feels like home. Read about my experiences joining Troop 27 and discovering a passion for the outdoors."
+>
+  <Header />
+  
+  <main class="pt-16">
+    <!-- Hero Section -->
+    <section class="py-16 bg-gradient-to-br from-ocean-50 to-slate-100">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+          <!-- Breadcrumb -->
+          <nav class="flex items-center space-x-2 text-sm text-slate-600 mb-6">
+            <a href="/" class="hover:text-ocean-600">Home</a>
+            <span>→</span>
+            <a href="/#blog" class="hover:text-ocean-600">Blog</a>
+            <span>→</span>
+            <span class="text-slate-800">My Scouting Journey</span>
+          </nav>
+          
+          <!-- Article Header -->
+          <div class="mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+              <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                Scouting
+              </span>
+              <span class="text-slate-500">November 24, 2025</span>
+            </div>
+            
+            <h1 class="text-4xl sm:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+              My Scouting Journey
+            </h1>
+            
+            <p class="text-xl text-slate-600 leading-relaxed">
+              Scouting is still a new journey for me, but it already feels like home… like something I was always meant to be a part of.
+            </p>
+          </div>
+          
+          <!-- Featured Image -->
+          <div class="rounded-xl overflow-hidden shadow-lg mb-8">
+            <img 
+              src="/scouting-journey-cover.jpg" 
+              alt="Scouting America Logo"
+              class="w-full h-96 object-cover object-center bg-white"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Article Content -->
+    <section class="py-16">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto">
+          <article class="prose prose-lg prose-slate max-w-none">
+            
+            <h2>A Natural Connection</h2>
+            
+            <p>Ever since I was a little kid, I’ve always been drawn to the outdoors. Climbing, exploring, adventuring, there’s just something about being outside that has always felt right to me. Whether it was running around with friends, imagining epic adventures, or just enjoying nature, I’ve always loved that feeling of freedom and excitement. At the time, I wasn’t sure what to do with those interests and fantasies.</p>
+            
+            <p>Like many kids, I let my parents take the lead in planning my activities. I had fun with what I did, but I never really took the time to explore what I truly wanted to do. Looking back, I sometimes wish I had joined Scouts sooner. The skills, the friendships, and the experiences that come with being part of a troop these are things I now realize I was missing out on.</p>
+
+            <h2>Taking the Leap</h2>
+            
+            <p>However, this all changed when my good friends FaceTimed me during a Camporee. That younger version of me thought about how people could even go three days without their mom and dad to camp. It sounded a little scary, but also freeing. However, it was too late to stop me, so I dragged my parents over to Troop 72 Cerritos in the summer of last year (2024) for my first meeting.</p>
+            
+            <p>But the great thing is, it’s never too late to start. Since joining Troop 27, I’ve already learned so much. I’ve met amazing people, challenged myself in new ways, and begun to develop skills that will help me throughout my life. I know that every campout, every hike, every meeting is an opportunity to grow, and I’m excited for what’s ahead.</p>
+
+            <blockquote>
+              <p>"I know that every campout, every hike, every meeting is an opportunity to grow, and I’m excited for what’s ahead."</p>
+            </blockquote>
+
+            <h2>Looking Forward</h2>
+            
+            <p>To anyone out there who might be like me, who loves adventure but hasn’t taken the leap yet, I’d say: go for it. Get outside, explore, and don’t be afraid to take that first step. Scouting has already made a difference in my life, and I know it will continue to do so.</p>
+
+          </article>
+          
+          <!-- Tags -->
+          <div class="mt-12 pt-8 border-t border-slate-200">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">Tags</h3>
+            <div class="flex flex-wrap gap-2">
+              <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">#scouting</span>
+              <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">#adventure</span>
+              <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">#outdoors</span>
+              <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm">#personal-growth</span>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="mt-12 pt-8 border-t border-slate-200">
+            <div class="flex justify-between items-center">
+              <a href="/#blog" class="inline-flex items-center text-ocean-600 hover:text-ocean-700 font-medium transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Home
+              </a>
+              
+              <div class="text-center">
+                <p class="text-slate-600 text-sm">Share this post</p>
+                <div class="flex space-x-3 mt-2">
+                  <a href="#" class="text-slate-500 hover:text-ocean-600" aria-label="Share on Twitter">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                    </svg>
+                  </a>
+                  <a href="#" class="text-slate-500 hover:text-ocean-600" aria-label="Share on Facebook">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <Footer />
+</Layout>
+
+<style>
+  .prose h2 {
+    @apply text-2xl font-bold text-slate-900 mt-8 mb-4;
+  }
+  
+  .prose h3 {
+    @apply text-xl font-semibold text-slate-800 mt-6 mb-3;
+  }
+  
+  .prose p {
+    @apply text-slate-700 leading-relaxed mb-4;
+  }
+  
+  .prose ul, .prose ol {
+    @apply mb-4 pl-6;
+  }
+  
+  .prose li {
+    @apply mb-2 text-slate-700;
+  }
+  
+  .prose blockquote {
+    @apply border-l-4 border-ocean-600 pl-6 py-2 my-6 bg-ocean-50 rounded-r-lg;
+  }
+  
+  .prose blockquote p {
+    @apply text-slate-800 font-medium italic;
+  }
+  
+  .prose strong {
+    @apply font-semibold text-slate-900;
+  }
+  
+  .prose em {
+    @apply italic text-slate-600;
+  }
+</style>
