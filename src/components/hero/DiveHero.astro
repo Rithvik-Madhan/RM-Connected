@@ -6,6 +6,7 @@ import AbyssZone from './zones/AbyssZone.astro';
 import ResurfaceZone from './zones/ResurfaceZone.astro';
 import DepthMeter from './DepthMeter.tsx';
 import ScrollProgress from '../motion/ScrollProgress.tsx';
+import PaletteScroll from '../motion/PaletteScroll.client.tsx';
 
 interface Props {
   achievements: Array<{
@@ -29,6 +30,7 @@ interface Props {
 const { achievements, featuredPhotos, featuredPosts } = Astro.props;
 ---
 <div id="dive-root" class="relative">
+  <PaletteScroll client:load />
   <ScrollProgress client:idle />
   <DepthMeter client:idle />
   <SunlitZone />
