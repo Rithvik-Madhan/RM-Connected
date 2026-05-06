@@ -1,8 +1,73 @@
 ---
-// Zone 1 — surface, sunlit. Filled in Task 12.
+// Zone 1 — Sunlit (0–200m). Surface. Name + identity + descend prompt.
+// Caustics shader is mounted by parent in Task 14.
 ---
-<section class="pin-zone" data-zone-name="sunlit" id="zone-sunlit">
-  <div class="container mx-auto px-6 flex items-center justify-center min-h-screen">
-    <h1 class="font-display text-6xl">Sunlit</h1>
+<section
+  class="pin-zone overflow-hidden"
+  data-zone-name="sunlit"
+  id="zone-sunlit"
+  style="background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);"
+>
+  <!-- Caustics canvas slot — filled by Caustics.client.tsx in Task 14 -->
+  <div id="caustics-slot" class="absolute inset-0 pointer-events-none" aria-hidden="true"></div>
+
+  <div class="relative z-10 container mx-auto px-6 min-h-screen flex flex-col items-center justify-center">
+    <p class="meta mb-6 opacity-70">Field notes from above and below the surface</p>
+
+    <h1
+      class="font-display text-balance text-center font-light leading-[0.92] tracking-tightish"
+      style="font-size: clamp(4rem, 14vw, 16rem); font-variation-settings: 'SOFT' 80, 'WONK' 0;"
+    >
+      <span class="reveal-letter">R</span><span class="reveal-letter">i</span><span
+        class="reveal-letter">t</span><span class="reveal-letter">h</span><span class="reveal-letter"
+        >v</span><span class="reveal-letter">i</span><span class="reveal-letter">k</span>
+    </h1>
+
+    <p class="mt-8 max-w-xl text-center text-lg sm:text-xl text-balance" style="color: var(--d-fg-muted);">
+      Marine biology student. Scuba diver. Eagle Scout. Photographer of the deep — and quietly, of the trail.
+    </p>
+
+    <a href="#zone-twilight" class="descend-prompt mt-16 group inline-flex flex-col items-center gap-3" aria-label="Descend to next section">
+      <span class="meta opacity-0 group-hover:opacity-100 transition-opacity">Descend</span>
+      <svg width="22" height="36" viewBox="0 0 22 36" fill="none" aria-hidden="true">
+        <path d="M11 1v30m0 0l-9-9m9 9l9-9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+      </svg>
+    </a>
   </div>
 </section>
+
+<style>
+  .reveal-letter {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.4em);
+    animation: letter-rise 900ms cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  }
+  .reveal-letter:nth-child(1) { animation-delay: 80ms; }
+  .reveal-letter:nth-child(2) { animation-delay: 180ms; }
+  .reveal-letter:nth-child(3) { animation-delay: 260ms; }
+  .reveal-letter:nth-child(4) { animation-delay: 340ms; }
+  .reveal-letter:nth-child(5) { animation-delay: 420ms; }
+  .reveal-letter:nth-child(6) { animation-delay: 500ms; }
+  .reveal-letter:nth-child(7) { animation-delay: 580ms; }
+
+  .descend-prompt {
+    color: var(--d-fg-muted);
+    opacity: 0;
+    animation: descend-fade 700ms ease-out 1.6s forwards;
+  }
+  .descend-prompt svg {
+    animation: descend-bob 2.4s ease-in-out infinite 2.5s;
+  }
+
+  @keyframes letter-rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes descend-fade {
+    to { opacity: 1; }
+  }
+  @keyframes descend-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(6px); }
+  }
+</style>
