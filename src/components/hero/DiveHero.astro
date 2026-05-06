@@ -4,6 +4,7 @@ import TwilightZone from './zones/TwilightZone.astro';
 import MidnightZone from './zones/MidnightZone.astro';
 import AbyssZone from './zones/AbyssZone.astro';
 import ResurfaceZone from './zones/ResurfaceZone.astro';
+import DepthMeter from './DepthMeter.tsx';
 
 interface Props {
   achievements: Array<{
@@ -27,6 +28,7 @@ interface Props {
 const { achievements, featuredPhotos, featuredPosts } = Astro.props;
 ---
 <div id="dive-root" class="relative">
+  <DepthMeter client:idle />
   <SunlitZone />
   <TwilightZone photos={featuredPhotos} />
   <MidnightZone posts={featuredPosts} />
