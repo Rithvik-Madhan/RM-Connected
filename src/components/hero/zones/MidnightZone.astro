@@ -1,9 +1,73 @@
 ---
-// Zone 3 — midnight. Filled in Task 20.
-const _ = Astro.props;
+import RevealOnScroll from '../../fx/RevealOnScroll.tsx';
+
+interface Post {
+  href: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  category: string;
+  date: string;
+  readTime?: string;
+}
+interface Props { posts?: Post[]; }
+const { posts = [] } = Astro.props as Props;
 ---
-<section class="pin-zone" data-zone-name="midnight" id="zone-midnight">
-  <div class="container mx-auto px-6 flex items-center justify-center min-h-screen">
-    <h1 class="font-display text-6xl">Midnight</h1>
+<section
+  class="pin-zone py-32 overflow-hidden"
+  data-zone-name="midnight"
+  id="zone-midnight"
+>
+  <div class="container mx-auto px-6">
+    <div class="max-w-2xl mb-20">
+      <p class="meta mb-4">1000–4000m · Midnight</p>
+      <h2
+        class="font-display font-light leading-[0.95] tracking-tightish"
+        style="font-size: clamp(2.5rem, 5.6vw, 5rem); font-variation-settings: 'SOFT' 30;"
+      >
+        Field notes,<br/>quietly written.
+      </h2>
+      <p class="mt-6 text-lg" style="color: var(--d-fg-muted);">
+        The marine biology side of things — research, blog posts, dispatches from coursework and curiosity.
+      </p>
+    </div>
+
+    <div class="space-y-20">
+      {posts.map((post, i) => (
+        <RevealOnScroll client:visible delay={i * 0.08}>
+          <a href={post.href} class="group grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div class="md:col-span-5 aspect-[4/3] overflow-hidden rounded-sm">
+              <img
+                src={post.image}
+                alt=""
+                loading="lazy"
+                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                style="filter: brightness(0.7) saturate(0.8);"
+              />
+            </div>
+            <div class="md:col-span-7">
+              <p class="meta mb-4">
+                <span style="color: var(--d-accent);">{post.category}</span>
+                <span class="opacity-50 mx-2">·</span>
+                <span>{post.date}</span>
+                {post.readTime && <><span class="opacity-50 mx-2">·</span><span>{post.readTime}</span></>}
+              </p>
+              <h3
+                class="font-display font-light leading-[1.05]"
+                style="font-size: clamp(1.6rem, 3.2vw, 2.8rem);"
+              >
+                {post.title}
+              </h3>
+              <p class="mt-4 text-base sm:text-lg max-w-prose" style="color: var(--d-fg-muted);">
+                {post.excerpt}
+              </p>
+              <span class="meta mt-6 inline-block transition-colors" style="color: var(--d-accent);">
+                Read →
+              </span>
+            </div>
+          </a>
+        </RevealOnScroll>
+      ))}
+    </div>
   </div>
 </section>

@@ -9,7 +9,32 @@ const featuredPhotos = [
   { src: '/hero-dive-boat.jpg', alt: 'Dive boat departure', caption: 'Anacapa · surface' },
 ];
 const achievements: any[] = [];
-const featuredPosts: any[] = [];
+const featuredPosts = [
+  {
+    href: '/blog/1',
+    title: 'On wonder, and what brought me to the water.',
+    excerpt: 'A first essay on why marine biology became the through-line of everything I do — and why I keep going back down.',
+    image: '/emerald-bay-diving.jpg',
+    category: 'Marine Biology',
+    date: '2025',
+  },
+  {
+    href: '/blog/3',
+    title: 'Notes from a night dive at La Jolla.',
+    excerpt: 'Things only show themselves when the sun is gone. A short field log from a summer night dive.',
+    image: '/night-diving-light.jpg',
+    category: 'Diving',
+    date: '2025',
+  },
+  {
+    href: '/blog/5',
+    title: 'Sequoia, after the fire.',
+    excerpt: 'A backpacking trip through a forest that was learning to come back. Notes on conservation, slowness, and the privilege of access.',
+    image: '/sequoia-misty.jpg',
+    category: 'Conservation',
+    date: '2024',
+  },
+];
 ---
 <Layout title="Rithvik Madhan" cinematic zone="sunlit">
   <DiveHero {achievements} {featuredPhotos} {featuredPosts} />
