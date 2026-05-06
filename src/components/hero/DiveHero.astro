@@ -1,0 +1,35 @@
+---
+import SunlitZone from './zones/SunlitZone.astro';
+import TwilightZone from './zones/TwilightZone.astro';
+import MidnightZone from './zones/MidnightZone.astro';
+import AbyssZone from './zones/AbyssZone.astro';
+import ResurfaceZone from './zones/ResurfaceZone.astro';
+
+interface Props {
+  achievements: Array<{
+    title: string;
+    organization: string;
+    date: string;
+    description: string;
+  }>;
+  featuredPhotos: Array<{ src: string; alt: string; caption?: string }>;
+  featuredPosts: Array<{
+    href: string;
+    title: string;
+    excerpt: string;
+    image: string;
+    category: string;
+    date: string;
+    readTime?: string;
+  }>;
+}
+
+const { achievements, featuredPhotos, featuredPosts } = Astro.props;
+---
+<div id="dive-root" class="relative">
+  <SunlitZone />
+  <TwilightZone photos={featuredPhotos} />
+  <MidnightZone posts={featuredPosts} />
+  <AbyssZone achievements={achievements} />
+  <ResurfaceZone />
+</div>
