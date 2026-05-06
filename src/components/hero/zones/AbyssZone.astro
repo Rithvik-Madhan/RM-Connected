@@ -1,13 +1,91 @@
 ---
 import Bioluminescence from '../../motion/Bioluminescence.client.tsx';
-const _ = Astro.props;
+
+interface Achievement {
+  title: string;
+  organization: string;
+  date: string;
+  description: string;
+}
+interface Props { achievements?: Achievement[]; }
+const { achievements = [] } = Astro.props as Props;
 ---
-<section class="pin-zone py-32 overflow-hidden relative" data-zone-name="abyss" id="zone-abyss"
-  style="background: var(--d-bg);">
+<section
+  class="pin-zone py-40 overflow-hidden relative"
+  data-zone-name="abyss"
+  id="zone-abyss"
+  style="background: var(--d-bg);"
+>
   <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
     <Bioluminescence client:visible intensity={1.0} />
   </div>
+
   <div class="container mx-auto px-6 relative z-10">
-    <h2 class="font-display text-6xl">Abyss</h2>
+    <div class="max-w-2xl mb-24">
+      <p class="meta mb-4">4000m+ · Abyss</p>
+      <h2
+        class="font-display font-light leading-[0.95] tracking-tightish"
+        style="font-size: clamp(2.5rem, 5.6vw, 5rem); font-variation-settings: 'SOFT' 80, 'WONK' 18;"
+      >
+        And what's<br/>shaped me down here.
+      </h2>
+      <p class="mt-6 text-lg" style="color: var(--d-fg-muted);">
+        Things you find when you've gone deep enough — recognitions, milestones, the slow accumulation of being shown up.
+      </p>
+    </div>
+
+    <ol class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
+      {achievements.map((a, i) => (
+        <li class="abyss-discovery group" data-cursor-attract style={`--ai: ${i};`}>
+          <div class="flex items-start gap-5">
+            <span
+              class="abyss-glow flex-none mt-2"
+              aria-hidden="true"
+            ></span>
+            <div>
+              <h3
+                class="font-display font-light leading-tight"
+                style="font-size: clamp(1.5rem, 2.6vw, 2.2rem);"
+              >
+                {a.title}
+              </h3>
+              <p class="meta mt-2">
+                <span>{a.organization}</span>
+                <span class="opacity-50 mx-2">·</span>
+                <span>{a.date}</span>
+              </p>
+              <p class="mt-4 max-w-md" style="color: var(--d-fg-muted);">
+                {a.description}
+              </p>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
   </div>
 </section>
+
+<style>
+  .abyss-glow {
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: var(--d-accent);
+    box-shadow: 0 0 12px var(--d-accent), 0 0 28px var(--d-accent);
+    animation: abyss-pulse 3.4s ease-in-out infinite;
+    animation-delay: calc(var(--ai, 0) * 0.4s);
+  }
+  .group:hover .abyss-glow {
+    box-shadow: 0 0 18px var(--d-accent), 0 0 40px var(--d-accent);
+  }
+  /* Scout-related items get the warm gold glow */
+  .abyss-discovery:nth-child(2) .abyss-glow,
+  .abyss-discovery:nth-child(3) .abyss-glow {
+    background: var(--d-accent-2);
+    box-shadow: 0 0 12px var(--d-accent-2), 0 0 28px var(--d-accent-2);
+  }
+  @keyframes abyss-pulse {
+    0%, 100% { opacity: 0.55; transform: scale(0.92); }
+    50%      { opacity: 1.0;  transform: scale(1.08); }
+  }
+</style>
