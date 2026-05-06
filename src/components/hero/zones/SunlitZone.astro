@@ -1,5 +1,6 @@
 ---
 import CursorFish from '../CursorFish.tsx';
+import Caustics from '../../motion/Caustics.client.tsx';
 ---
 <section
   class="pin-zone overflow-hidden"
@@ -8,8 +9,9 @@ import CursorFish from '../CursorFish.tsx';
   style="background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);"
 >
   <CursorFish client:load />
-  <!-- Caustics canvas slot — filled by Caustics.client.tsx in Task 14 -->
-  <div id="caustics-slot" class="absolute inset-0 pointer-events-none" aria-hidden="true"></div>
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+    <Caustics client:visible />
+  </div>
 
   <div class="relative z-10 container mx-auto px-6 min-h-screen flex flex-col items-center justify-center">
     <p class="meta mb-6 opacity-70">Field notes from above and below the surface</p>
