@@ -1,9 +1,13 @@
 ---
-// Zone 4 — abyss. Filled in Task 22.
+import Bioluminescence from '../../motion/Bioluminescence.client.tsx';
 const _ = Astro.props;
 ---
-<section class="pin-zone" data-zone-name="abyss" id="zone-abyss">
-  <div class="container mx-auto px-6 flex items-center justify-center min-h-screen">
-    <h1 class="font-display text-6xl">Abyss</h1>
+<section class="pin-zone py-32 overflow-hidden relative" data-zone-name="abyss" id="zone-abyss"
+  style="background: var(--d-bg);">
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+    <Bioluminescence client:visible intensity={1.0} />
+  </div>
+  <div class="container mx-auto px-6 relative z-10">
+    <h2 class="font-display text-6xl">Abyss</h2>
   </div>
 </section>
