@@ -6,62 +6,34 @@ export default {
   theme: {
     extend: {
       colors: {
-        ocean: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7', // Primary ocean blue
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        // Depth tokens — resolve to CSS custom properties so they animate on scroll.
+        depth: {
+          bg: 'var(--d-bg)',
+          'bg-2': 'var(--d-bg-2)',
+          fg: 'var(--d-fg)',
+          'fg-muted': 'var(--d-fg-muted)',
+          accent: 'var(--d-accent)',
+          'accent-2': 'var(--d-accent-2)',
+          rule: 'var(--d-rule)',
         },
-        sand: {
-          50: '#fefdf8',
-          100: '#fef9c3',
-          200: '#fef08a',
-          300: '#fde047',
-          400: '#facc15',
-          500: '#f59e0b', // Accent sandy tan
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-        }
+        cat: 'var(--cat)',
       },
       fontFamily: {
-        sans: ['Inter', ...defaultTheme.fontFamily.sans],
-        serif: ['Merriweather', ...defaultTheme.fontFamily.serif],
+        display: ['var(--font-display)', ...defaultTheme.fontFamily.serif],
+        sans: ['var(--font-body)', ...defaultTheme.fontFamily.sans],
+        mono: ['var(--font-mono)', ...defaultTheme.fontFamily.mono],
       },
-      animation: {
-        'wave': 'wave 2s ease-in-out infinite',
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'slide-up': 'slideUp 0.3s ease-out',
+      maxWidth: {
+        reading: 'var(--reading-col)',
       },
-      keyframes: {
-        wave: {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '50%': { transform: 'translateX(10px)' },
-        },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        }
-      },
-      spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
+      letterSpacing: {
+        tightish: '-0.015em',
+        widish: '0.04em',
       },
       screens: {
-        'xs': '480px',
-      }
+        xs: '480px',
+      },
     },
   },
   plugins: [],
-}
+};
