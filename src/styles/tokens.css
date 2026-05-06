@@ -1,0 +1,61 @@
+/* Depth-zone palette tokens.
+ * --d-* = "depth", interpolated by GSAP on home page scroll.
+ * Other pages set these to a single zone via [data-zone="..."] on <html>.
+ */
+:root {
+  /* Active zone — interpolated continuously on home, set per-page elsewhere. */
+  --d-bg: #A6DDF0;
+  --d-bg-2: #E8F6FB;
+  --d-fg: #062538;
+  --d-fg-muted: #2C4A60;
+  --d-accent: #F4D27A;
+  --d-accent-2: #7BD8E0;
+  --d-rule: rgba(6, 37, 56, 0.08);
+
+  /* Reading column max width */
+  --reading-col: 680px;
+
+  /* Type system */
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, serif;
+  --font-body: 'General Sans', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+/* Per-page palette pins. Home does NOT use these — its tokens are scroll-driven.
+ * Use on <html data-zone="twilight"> etc. for non-home pages. */
+[data-zone="sunlit"] {
+  --d-bg: #A6DDF0; --d-bg-2: #E8F6FB;
+  --d-fg: #062538; --d-fg-muted: #2C4A60;
+  --d-accent: #F4D27A; --d-accent-2: #7BD8E0;
+  --d-rule: rgba(6, 37, 56, 0.08);
+}
+[data-zone="twilight"] {
+  --d-bg: #1B5E7E; --d-bg-2: #0E3F58;
+  --d-fg: #E8F1F5; --d-fg-muted: #B6C9D4;
+  --d-accent: #7BD8E0; --d-accent-2: #F4D27A;
+  --d-rule: rgba(232, 241, 245, 0.10);
+}
+[data-zone="midnight"] {
+  --d-bg: #0A1628; --d-bg-2: #06101D;
+  --d-fg: #D6DCE5; --d-fg-muted: #8A95A6;
+  --d-accent: #7BFFB1; --d-accent-2: #F4D27A;
+  --d-rule: rgba(214, 220, 229, 0.08);
+}
+[data-zone="abyss"] {
+  --d-bg: #03060B; --d-bg-2: #03060B;
+  --d-fg: #E0DAC8; --d-fg-muted: #8A8473;
+  --d-accent: #7BFFB1; --d-accent-2: #F4D27A;
+  --d-rule: rgba(224, 218, 200, 0.08);
+}
+[data-zone="surface"] {
+  --d-bg: #F4EDE0; --d-bg-2: #FAF6EE;
+  --d-fg: #1A1410; --d-fg-muted: #4A3F36;
+  --d-accent: #F4D27A; --d-accent-2: #7BD8E0;
+  --d-rule: rgba(26, 20, 16, 0.08);
+}
+
+/* Category tints — used on blog cards. */
+[data-cat="marine-biology"] { --cat: #1B5E7E; }
+[data-cat="diving"]         { --cat: #0E3F58; }
+[data-cat="conservation"]   { --cat: #1F6B5C; }
+[data-cat="scouting"]       { --cat: #7A5A2E; }
