@@ -1,114 +1,85 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&display=swap');
+
+@import '@fontsource-variable/fraunces';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '/fonts/general-sans.css';
+
+@import './tokens.css';
 
 @layer base {
   html {
-    font-family: Inter, system-ui, sans-serif;
-    scroll-behavior: smooth;
+    font-family: var(--font-body);
+    background: var(--d-bg);
+    color: var(--d-fg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  
+
   body {
-    @apply bg-slate-50 text-slate-800 antialiased;
+    @apply min-h-screen;
+    background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);
+    transition: background 600ms ease;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-semibold;
+    font-family: var(--font-display);
+    font-feature-settings: 'ss01', 'ss02';
+    letter-spacing: -0.015em;
   }
-  
-  .blog-content {
-    @apply font-serif;
+
+  ::selection {
+    background: var(--d-accent);
+    color: var(--d-bg);
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply bg-ocean-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-ocean-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:ring-offset-2;
+  .btn-quiet {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-sans text-sm tracking-widish uppercase;
+    color: var(--d-fg);
+    border: 1px solid var(--d-rule);
+    transition: border-color 300ms ease, color 300ms ease;
   }
-  
-  .btn-secondary {
-    @apply bg-white text-ocean-600 border-2 border-ocean-600 px-6 py-3 rounded-lg font-medium hover:bg-ocean-50 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:ring-offset-2;
+  .btn-quiet:hover {
+    border-color: var(--d-accent);
+    color: var(--d-accent);
   }
-  
-  .card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-slate-200;
+
+  .meta {
+    @apply font-mono text-xs tracking-widish uppercase;
+    color: var(--d-fg-muted);
   }
-  
-  .nav-link {
-    @apply text-slate-600 hover:text-ocean-600 px-4 py-2 rounded-md font-medium relative;
-    transition: color 0.3s ease;
-  }
-  
-  .nav-link::before {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    bottom: 6px;
-    left: 50%;
-    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-    transition: all 0.3s ease;
-    transform: translateX(-50%);
-  }
-  
-  .nav-link:hover::before {
-    width: calc(100% - 2rem);
-  }
-  
-  .nav-link.active {
-    @apply text-ocean-600 bg-ocean-50;
-  }
-  
-  .loading-skeleton {
-    @apply bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 animate-pulse;
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-  
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+
+  .reading-col {
+    @apply mx-auto px-6;
+    max-width: var(--reading-col);
   }
 }
 
 @layer utilities {
-  .text-gradient {
-    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .pin-zone {
+    /* Helper for zone wrappers: full-viewport block, content centered. */
+    @apply relative w-full min-h-screen;
   }
-  
-  .ocean-gradient {
-    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%);
-  }
-  
-  .sand-gradient {
-    background: linear-gradient(135deg, #f59e0b 0%, #fde047 100%);
-  }
+
+  .text-balance { text-wrap: balance; }
+  .text-pretty  { text-wrap: pretty; }
 }
 
-/* Accessibility */
+/* Hide native cursor on home hero where CursorFish is active. */
+html[data-cursor="fish"] body { cursor: none; }
+html[data-cursor="fish"] body * { cursor: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Print styles */
-@media print {
-  body {
-    @apply text-black bg-white;
-  }
-  
-  .no-print {
-    display: none !important;
-  }
-  
-  .card {
-    @apply border border-gray-300 shadow-none;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
