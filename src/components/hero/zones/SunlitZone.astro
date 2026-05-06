@@ -1,6 +1,5 @@
 ---
-// Zone 1 — Sunlit (0–200m). Surface. Name + identity + descend prompt.
-// Caustics shader is mounted by parent in Task 14.
+import CursorFish from '../CursorFish.tsx';
 ---
 <section
   class="pin-zone overflow-hidden"
@@ -8,6 +7,7 @@
   id="zone-sunlit"
   style="background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);"
 >
+  <CursorFish client:load />
   <!-- Caustics canvas slot — filled by Caustics.client.tsx in Task 14 -->
   <div id="caustics-slot" class="absolute inset-0 pointer-events-none" aria-hidden="true"></div>
 
