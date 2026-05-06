@@ -1,9 +1,56 @@
 ---
-// Zone 2 — twilight. Filled in Task 16.
-const _ = Astro.props;
+import RevealOnScroll from '../../fx/RevealOnScroll.tsx';
+import ParallaxImage from '../../fx/ParallaxImage.tsx';
+
+interface Photo { src: string; alt: string; caption?: string; }
+interface Props { photos?: Photo[]; }
+
+const { photos = [] } = Astro.props as Props;
 ---
-<section class="pin-zone" data-zone-name="twilight" id="zone-twilight">
-  <div class="container mx-auto px-6 flex items-center justify-center min-h-screen">
-    <h1 class="font-display text-6xl">Twilight</h1>
+<section
+  class="pin-zone py-32 overflow-hidden"
+  data-zone-name="twilight"
+  id="zone-twilight"
+  style="background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);"
+>
+  <div class="container mx-auto px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+      <!-- Pinned heading column -->
+      <div class="lg:col-span-4 lg:sticky lg:top-32 lg:self-start">
+        <p class="meta mb-4">200–1000m · Twilight</p>
+        <h2
+          class="font-display font-light leading-[0.95] tracking-tightish"
+          style="font-size: clamp(2.5rem, 5.6vw, 5rem); font-variation-settings: 'SOFT' 30, 'WONK' 0;"
+        >
+          What I find<br/>down there.
+        </h2>
+        <p class="mt-6 text-base sm:text-lg" style="color: var(--d-fg-muted);">
+          A small archive of underwater photographs from local shore dives, boat trips, and a couple of trips that paid for themselves in stories.
+        </p>
+      </div>
+
+      <!-- Photo grid -->
+      <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+        {photos.map((p, i) => (
+          <RevealOnScroll client:visible delay={i * 0.05} className={i % 3 === 0 ? 'sm:col-span-2 sm:row-span-2' : ''}>
+            <figure class="group">
+              <div class={`relative ${i % 3 === 0 ? 'aspect-[4/3]' : 'aspect-[3/4]'} overflow-hidden rounded-sm`}>
+                <ParallaxImage
+                  client:visible
+                  src={p.src}
+                  alt={p.alt}
+                  amount={40}
+                  className="absolute inset-0"
+                  imgClassName="brightness-90 saturate-90 group-hover:brightness-105 group-hover:saturate-100 transition-[filter] duration-700"
+                />
+              </div>
+              {p.caption && (
+                <figcaption class="meta mt-3 opacity-80">{p.caption}</figcaption>
+              )}
+            </figure>
+          </RevealOnScroll>
+        ))}
+      </div>
+    </div>
   </div>
 </section>

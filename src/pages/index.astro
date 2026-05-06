@@ -2,9 +2,13 @@
 import Layout from '../layouts/Layout.astro';
 import DiveHero from '../components/hero/DiveHero.astro';
 
-// Temporary stub data — final wiring happens in Task 26.
+const featuredPhotos = [
+  { src: '/hero-underwater-shark.jpg', alt: 'Shark from a deep shore dive', caption: 'Catalina · 18m' },
+  { src: '/emerald-bay-diving.jpg', alt: 'Emerald Bay dive', caption: 'Emerald Bay · 12m' },
+  { src: '/night-diving-light.jpg', alt: 'Night dive light', caption: 'Night dive · 9m' },
+  { src: '/hero-dive-boat.jpg', alt: 'Dive boat departure', caption: 'Anacapa · surface' },
+];
 const achievements: any[] = [];
-const featuredPhotos: any[] = [];
 const featuredPosts: any[] = [];
 ---
 <Layout title="Rithvik Madhan" cinematic zone="sunlit">
