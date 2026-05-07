@@ -44,3 +44,5 @@ temp/
 
 # GitHub specific files (workflows needed for deployment)
 # .github/
+.gstack/
+.design-review/
