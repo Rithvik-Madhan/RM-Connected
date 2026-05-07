@@ -29,6 +29,11 @@ import Caustics from '../../motion/Caustics.client.tsx';
       Marine biology student. Scuba diver. Eagle Scout. Photographer of the deep — and quietly, of the trail.
     </p>
 
+    <a href="/blog" class="hero-link mt-7 inline-flex items-center gap-2 font-display italic text-base sm:text-lg">
+      Read the writing
+      <span aria-hidden="true" class="hero-link-arrow">→</span>
+    </a>
+
     <a href="#zone-twilight" class="descend-prompt mt-16 group inline-flex flex-col items-center gap-3" aria-label="Descend to next section">
       <span class="meta opacity-0 group-hover:opacity-100 transition-opacity">Descend</span>
       <svg width="22" height="36" viewBox="0 0 22 36" fill="none" aria-hidden="true">
@@ -52,6 +57,27 @@ import Caustics from '../../motion/Caustics.client.tsx';
   .reveal-letter:nth-child(5) { animation-delay: 420ms; }
   .reveal-letter:nth-child(6) { animation-delay: 500ms; }
   .reveal-letter:nth-child(7) { animation-delay: 580ms; }
+
+  .hero-link {
+    color: var(--d-fg);
+    opacity: 0;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--d-fg) 25%, transparent);
+    text-underline-offset: 6px;
+    text-decoration-thickness: 1px;
+    transition: text-decoration-color 280ms ease, color 280ms ease;
+    animation: descend-fade 700ms ease-out 1.3s forwards;
+  }
+  .hero-link:hover {
+    text-decoration-color: var(--d-fg);
+  }
+  .hero-link-arrow {
+    display: inline-block;
+    transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .hero-link:hover .hero-link-arrow {
+    transform: translateX(4px);
+  }
 
   .descend-prompt {
     color: var(--d-fg-muted);
