@@ -1,0 +1,77 @@
+---
+// HomeNav — top nav for the cinematic homepage.
+// Hidden at scroll 0 (hero stays clean), fades in once the user has scrolled
+// roughly one viewport. Mirrors BlogNav's HOME / WRITING / CONTACT layout
+// so navigation is consistent the moment it becomes visible.
+---
+<header
+  class="home-nav fixed inset-x-0 top-0 z-40"
+  aria-hidden="true"
+  data-state="hidden"
+>
+  <div class="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
+    <a href="/" class="font-display text-base tracking-tightish hover:opacity-70 transition-opacity">
+      Rithvik Madhan
+    </a>
+    <nav class="flex items-center gap-7 font-mono text-[11px] tracking-widish uppercase">
+      <a href="/" class="hover:opacity-70 transition-opacity" aria-current="page">Home</a>
+      <a href="/blog" class="hover:opacity-70 transition-opacity">Writing</a>
+      <a href="/contact" class="hover:opacity-70 transition-opacity">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .home-nav {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition:
+      opacity 420ms ease,
+      transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      background-color 420ms ease,
+      backdrop-filter 420ms ease,
+      border-color 420ms ease;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    color: var(--d-fg);
+  }
+  .home-nav[data-state="visible"] {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    background: color-mix(in srgb, var(--d-bg) 80%, transparent);
+    backdrop-filter: blur(10px) saturate(120%);
+    border-bottom-color: var(--d-rule);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-nav {
+      transition: opacity 200ms ease, background-color 200ms ease;
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('.home-nav');
+  if (nav) {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const trigger = window.innerHeight * 0.9;
+      const visible = window.scrollY > trigger;
+      nav.dataset.state = visible ? 'visible' : 'hidden';
+      nav.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+  }
+</script>

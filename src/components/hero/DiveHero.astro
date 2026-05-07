@@ -5,6 +5,7 @@ import MidnightZone from './zones/MidnightZone.astro';
 import AbyssZone from './zones/AbyssZone.astro';
 import ResurfaceZone from './zones/ResurfaceZone.astro';
 import DepthMeter from './DepthMeter.tsx';
+import HomeNav from './HomeNav.astro';
 import ScrollProgress from '../motion/ScrollProgress.tsx';
 import PaletteScroll from '../motion/PaletteScroll.client.tsx';
 
@@ -33,6 +34,7 @@ const { achievements, featuredPhotos, featuredPosts } = Astro.props;
   <PaletteScroll client:load />
   <ScrollProgress client:idle />
   <DepthMeter client:idle />
+  <HomeNav />
   <SunlitZone />
   <TwilightZone photos={featuredPhotos} />
   <MidnightZone posts={featuredPosts} />
