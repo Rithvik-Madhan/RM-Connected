@@ -1,0 +1,63 @@
+---
+import { postsByDate, formatPostDate } from '../../data/posts';
+
+// Group reverse-chronologically by year for editorial separation.
+const byYear: Record<string, typeof postsByDate> = {};
+for (const p of postsByDate) {
+  const yr = p.date.slice(0, 4);
+  (byYear[yr] ||= []).push(p);
+}
+const years = Object.keys(byYear).sort((a, b) => Number(b) - Number(a));
+---
+<div class="mx-auto max-w-4xl px-6">
+  {years.map((yr) => (
+    <section class="mb-20">
+      <p class="meta mb-10 sticky top-20 z-10 py-2"
+         style="background: color-mix(in srgb, var(--d-bg) 88%, transparent); backdrop-filter: blur(6px);">
+        {yr}
+      </p>
+      <ul class="divide-y" style="border-color: var(--d-rule);">
+        {byYear[yr].map((post) => (
+          <li
+            class="post-row group relative"
+            data-cat={post.category.toLowerCase().replace(/\s+/g, '-')}
+            style="border-color: var(--d-rule);"
+          >
+            <a href={`/blog/${post.slug}`} class="block py-8 md:py-10 grid grid-cols-12 gap-6 items-baseline">
+              <div class="col-span-12 md:col-span-3">
+                <p class="meta">
+                  <span class="inline-block w-2 h-2 rounded-full mr-2 align-middle" style="background: var(--cat, var(--d-accent));"></span>
+                  {post.category}
+                </p>
+                <p class="meta opacity-60 mt-1.5">{formatPostDate(post.date)}</p>
+              </div>
+              <div class="col-span-12 md:col-span-9">
+                <h3 class="font-display font-light text-balance text-2xl md:text-3xl leading-[1.1] tracking-tightish group-hover:translate-x-2 transition-transform duration-500">
+                  {post.title}
+                </h3>
+                <p class="mt-3 max-w-xl text-pretty leading-relaxed" style="color: var(--d-fg-muted);">
+                  {post.lede}
+                </p>
+              </div>
+            </a>
+            <img
+              src={post.image}
+              alt=""
+              aria-hidden="true"
+              class="hidden lg:block post-row-peek absolute right-6 top-1/2 -translate-y-1/2 w-44 h-28 object-cover rounded-sm pointer-events-none opacity-0 scale-95 transition-all duration-500"
+              style="border: 1px solid var(--d-rule);"
+              loading="lazy"
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</div>
+
+<style>
+  .post-row:hover .post-row-peek {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+</style>

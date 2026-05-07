@@ -1,0 +1,33 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import BlogNav from '../../components/blog/BlogNav.astro';
+import IndexList from '../../components/blog/IndexList.astro';
+import Footer from '../../components/chrome/Footer.astro';
+import { posts } from '../../data/posts';
+
+const total = posts.length;
+---
+<Layout
+  title="Writing — Rithvik Madhan"
+  description="Field notes from above and below the surface. Marine biology, diving, scouting, and conservation."
+  zone="surface"
+>
+  <BlogNav />
+  <main class="pb-16">
+    <section class="pt-36 pb-24 md:pt-44 md:pb-28">
+      <div class="mx-auto max-w-4xl px-6">
+        <p class="meta mb-7">Field notes</p>
+        <h1 class="font-display font-light text-balance text-[clamp(2.5rem,6vw,5.5rem)] leading-[1.02] tracking-tightish">
+          Things I bring back<br/>from the water.
+        </h1>
+        <p class="mt-7 max-w-xl text-lg md:text-xl text-pretty font-display italic" style="color: var(--d-fg-muted);">
+          Essays on marine biology, dispatches from dives, scouting trips, and the slow practice of paying attention.
+          {total} pieces so far — more on the way.
+        </p>
+      </div>
+    </section>
+
+    <IndexList />
+  </main>
+  <Footer />
+</Layout>

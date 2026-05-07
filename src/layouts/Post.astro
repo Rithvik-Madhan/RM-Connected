@@ -1,0 +1,187 @@
+---
+import Layout from './Layout.astro';
+import BlogNav from '../components/blog/BlogNav.astro';
+import PostHero from '../components/blog/PostHero.astro';
+import PostFooter from '../components/blog/PostFooter.astro';
+import Footer from '../components/chrome/Footer.astro';
+import type { PostMeta } from '../data/posts';
+
+interface Props {
+  post: PostMeta;
+}
+const { post } = Astro.props;
+
+const title = `${post.title} — Rithvik Madhan`;
+---
+<Layout title={title} description={post.lede} zone="surface">
+  <BlogNav />
+  <main data-cat={post.category.toLowerCase().replace(/\s+/g, '-')} class="pb-16">
+    <PostHero post={post} />
+    <article class="reading-col post-prose">
+      <slot />
+    </article>
+    <PostFooter post={post} />
+  </main>
+  <Footer />
+</Layout>
+
+<style is:global>
+  .post-prose {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    color: var(--d-fg);
+  }
+
+  /* Drop cap on the first paragraph. */
+  .post-prose > p:first-of-type::first-letter {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 4.5em;
+    line-height: 0.85;
+    float: left;
+    padding: 0.08em 0.12em 0 0;
+    margin-right: 0.04em;
+    color: var(--d-fg);
+  }
+
+  .post-prose p {
+    margin: 0 0 1.4em 0;
+  }
+
+  .post-prose h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.55rem, 2.4vw, 1.85rem);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 3em 0 0.9em;
+    color: var(--d-fg);
+  }
+  .post-prose h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.2rem;
+    line-height: 1.25;
+    margin: 2.2em 0 0.7em;
+    color: var(--d-fg);
+  }
+
+  .post-prose strong {
+    font-weight: 600;
+    color: var(--d-fg);
+  }
+  .post-prose em {
+    font-style: italic;
+    color: var(--d-fg-muted);
+  }
+
+  .post-prose a {
+    color: var(--d-fg);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--cat, var(--d-accent)) 60%, transparent);
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+    transition: text-decoration-color 250ms ease;
+  }
+  .post-prose a:hover {
+    text-decoration-color: var(--cat, var(--d-accent));
+  }
+
+  .post-prose ul, .post-prose ol {
+    margin: 0 0 1.4em 0;
+    padding-left: 1.4em;
+  }
+  .post-prose ul { list-style: none; }
+  .post-prose ul > li {
+    position: relative;
+    margin-bottom: 0.6em;
+  }
+  .post-prose ul > li::before {
+    content: '';
+    position: absolute;
+    left: -1.1em;
+    top: 0.7em;
+    width: 0.4em;
+    height: 1px;
+    background: var(--d-fg-muted);
+  }
+  .post-prose ol > li {
+    margin-bottom: 0.6em;
+  }
+
+  /* Pull quote — full editorial treatment. */
+  .post-prose blockquote {
+    margin: 2.5em -1rem;
+    padding: 0 1rem;
+    border: none;
+    text-align: center;
+  }
+  .post-prose blockquote p {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(1.4rem, 2.6vw, 1.85rem);
+    line-height: 1.3;
+    color: var(--d-fg);
+    margin: 0;
+    position: relative;
+  }
+  .post-prose blockquote p::before {
+    content: '“';
+    font-size: 2.4em;
+    line-height: 0;
+    vertical-align: -0.3em;
+    margin-right: 0.05em;
+    color: var(--cat, var(--d-accent));
+    opacity: 0.55;
+  }
+  .post-prose blockquote p::after {
+    content: '”';
+    font-size: 2.4em;
+    line-height: 0;
+    vertical-align: -0.3em;
+    margin-left: 0.05em;
+    color: var(--cat, var(--d-accent));
+    opacity: 0.55;
+  }
+
+  /* Inline images: existing posts use <div class="my-12"> wrappers with an <img> + caption.
+     Style those + native <figure> the same way. */
+  .post-prose .my-12,
+  .post-prose figure {
+    margin: 3em 0;
+  }
+  .post-prose .my-12 img,
+  .post-prose figure img {
+    width: 100%;
+    height: auto;
+    border-radius: 2px;
+    border: 1px solid var(--d-rule);
+    box-shadow: none;
+  }
+  .post-prose .my-12 p,
+  .post-prose figure figcaption {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--d-fg-muted);
+    text-align: center;
+    margin-top: 0.9em;
+  }
+
+  /* Headings inside the post body: kill any legacy classes that conflict. */
+  .post-prose .text-2xl,
+  .post-prose .text-xl { font-size: inherit; }
+  .post-prose .font-bold { font-weight: 400; }
+  .post-prose .font-semibold { font-weight: 500; }
+  .post-prose .text-slate-900,
+  .post-prose .text-slate-800,
+  .post-prose .text-slate-700,
+  .post-prose .text-slate-600,
+  .post-prose .text-slate-500 { color: inherit; }
+  .post-prose .leading-relaxed { line-height: inherit; }
+  .post-prose .mt-8, .post-prose .mt-6 { margin-top: 0; }
+  .post-prose .mb-4, .post-prose .mb-3 { margin-bottom: 0; }
+</style>

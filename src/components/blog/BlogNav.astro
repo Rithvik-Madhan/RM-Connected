@@ -1,0 +1,38 @@
+---
+interface Props {
+  /** When true, renders the nav with a soft top-fade after scroll. */
+  sticky?: boolean;
+}
+const { sticky = true } = Astro.props;
+---
+<header
+  data-sticky={sticky}
+  class="blog-nav fixed inset-x-0 top-0 z-40 transition-[background,backdrop-filter,border-color] duration-500"
+  style="border-bottom: 1px solid transparent;"
+>
+  <div class="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
+    <a href="/" class="font-display text-base tracking-tightish hover:opacity-70 transition-opacity">
+      Rithvik Madhan
+    </a>
+    <nav class="flex items-center gap-7 font-mono text-[11px] tracking-widish uppercase">
+      <a href="/" class="hover:opacity-70 transition-opacity">Home</a>
+      <a href="/blog" class="hover:opacity-70 transition-opacity" aria-current="page">Writing</a>
+      <a href="/contact" class="hover:opacity-70 transition-opacity">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  // Reveal a faint surface fill + hairline once the reader has scrolled past the title block.
+  const nav = document.querySelector<HTMLElement>('.blog-nav[data-sticky="true"]');
+  if (nav) {
+    const onScroll = () => {
+      const past = window.scrollY > 80;
+      nav.style.background = past ? 'color-mix(in srgb, var(--d-bg) 86%, transparent)' : 'transparent';
+      nav.style.backdropFilter = past ? 'blur(8px) saturate(120%)' : 'none';
+      nav.style.borderBottomColor = past ? 'var(--d-rule)' : 'transparent';
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+</script>
