@@ -10,7 +10,7 @@ const ZONE_LABEL: Record<string, string> = {
 };
 
 export default function DepthMeter() {
-  const { zone, depthM, progress } = useDepthZone();
+  const { zone, depthM } = useDepthZone();
 
   function jumpTo(z: string) {
     const el = document.getElementById(`zone-${z}`);
@@ -48,8 +48,6 @@ export default function DepthMeter() {
           );
         })}
       </div>
-      {/* Hidden scrollbar for screen readers — does not render visibly. */}
-      <span className="sr-only">Scroll progress: {Math.round(progress * 100)}%</span>
     </aside>
   );
 }
