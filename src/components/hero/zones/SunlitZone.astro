@@ -1,16 +1,56 @@
 ---
 import CursorFish from '../CursorFish.tsx';
-import Caustics from '../../motion/Caustics.client.tsx';
+import OceanSurface from '../../motion/OceanSurface.client.tsx';
 ---
 <section
-  class="pin-zone overflow-hidden"
+  class="pin-zone overflow-hidden relative"
   data-zone-name="sunlit"
   id="zone-sunlit"
   style="background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);"
 >
   <CursorFish client:load />
-  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-    <Caustics client:visible />
+
+  <div class="sky-scene" aria-hidden="true">
+    <div class="sky-grad"></div>
+    <div class="sun-glow"></div>
+    <div class="cloud-layer cloud-puffy">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
+        <defs>
+          <filter id="cloud-puffy-fx" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0036 0.0068" numOctaves="4" seed="13" stitchTiles="stitch"/>
+            <feColorMatrix values="0 0 0 0 1
+                                   0 0 0 0 1
+                                   0 0 0 0 1
+                                   0 0 0 3.4 -1.7"/>
+            <feGaussianBlur stdDeviation="3.2"/>
+          </filter>
+        </defs>
+        <rect width="100%" height="100%" filter="url(#cloud-puffy-fx)"/>
+      </svg>
+    </div>
+    <div class="cloud-layer cloud-wisp">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
+        <defs>
+          <filter id="cloud-wisp-fx" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves="2" seed="5" stitchTiles="stitch"/>
+            <feColorMatrix values="0 0 0 0 1
+                                   0 0 0 0 1
+                                   0 0 0 0 1
+                                   0 0 0 1.6 -0.95"/>
+            <feGaussianBlur stdDeviation="1.5"/>
+          </filter>
+        </defs>
+        <rect width="100%" height="100%" filter="url(#cloud-wisp-fx)"/>
+      </svg>
+    </div>
+    <div class="horizon-haze"></div>
+    <div class="ocean-surface">
+      <!-- Static fallback gradient — visible when reduced-motion / low-power -->
+      <div class="ocean-base"></div>
+      <!-- Animated WebGL water -->
+      <OceanSurface client:visible sunX={0.5} />
+      <div class="horizon-line"></div>
+    </div>
   </div>
 
   <div class="relative z-10 container mx-auto px-6 min-h-screen flex flex-col items-center justify-center">
@@ -44,6 +84,76 @@ import Caustics from '../../motion/Caustics.client.tsx';
 </section>
 
 <style>
+  .sky-scene {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  /* Saturated sky → bright horizon haze → fades to the section's bg gradient. */
+  .sky-grad {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+      #2C8FD7 0%,
+      #5DB0E8 28%,
+      #9CD0EF 58%,
+      #DCEEF7 82%,
+      rgba(232, 246, 251, 0) 100%
+    );
+  }
+  /* Soft central sun bloom. */
+  .sun-glow {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 36% 24% at 50% 56%, rgba(255, 252, 235, 0.95) 0%, rgba(255, 248, 220, 0.45) 22%, rgba(255, 248, 220, 0.0) 60%),
+      radial-gradient(ellipse 14% 9% at 50% 56%, rgba(255, 255, 250, 1) 0%, rgba(255, 255, 250, 0) 70%);
+  }
+  /* Big puffy cumulus, concentrated in upper-mid altitude. */
+  .cloud-layer { position: absolute; inset: 0; }
+  .cloud-layer svg { display: block; width: 100%; height: 100%; }
+  .cloud-puffy {
+    mix-blend-mode: screen;
+    opacity: 0.95;
+    -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, black 25%, black 55%, rgba(0,0,0,0.4) 80%, transparent 95%);
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, black 25%, black 55%, rgba(0,0,0,0.4) 80%, transparent 95%);
+  }
+  /* Smaller wispy detail spread a bit wider. */
+  .cloud-wisp {
+    mix-blend-mode: screen;
+    opacity: 0.55;
+    -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, black 25%, black 65%, rgba(0,0,0,0.3) 85%, transparent 96%);
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, black 25%, black 65%, rgba(0,0,0,0.3) 85%, transparent 96%);
+  }
+  /* Bright atmospheric haze in the lower sky, just above the horizon. */
+  .horizon-haze {
+    position: absolute; left: 0; right: 0; bottom: 25%; height: 22%;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(245, 250, 252, 0.45) 55%,
+      rgba(220, 238, 247, 0.85) 100%
+    );
+  }
+  /* Ocean surface at the bottom of the section — clearly delineated horizon. */
+  .ocean-surface {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 25%;
+    overflow: hidden;
+  }
+  /* Static fallback gradient (visible only when WebGL canvas isn't rendered).
+     Bottom color #4A87B0 matches TwilightZone's top color exactly. */
+  .ocean-base {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+      #C9E0EA 0%, #88B8D1 28%, #6BA1C2 60%, #4A87B0 100%
+    );
+  }
+  /* Crisp horizon line where sky meets water — drawn last so it's on top. */
+  .horizon-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 12px 2px rgba(255, 252, 230, 0.55);
+  }
+
   .reveal-letter {
     display: inline-block;
     opacity: 0;

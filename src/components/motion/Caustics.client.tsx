@@ -78,7 +78,8 @@ export default function Caustics() {
 
     let raf = 0;
     function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      // DPR clamped to 1 — caustics are soft glows, not detail-critical.
+      const dpr = 1;
       canvas!.width = window.innerWidth * dpr;
       canvas!.height = window.innerHeight * dpr;
       canvas!.style.width = '100vw';
@@ -88,8 +89,20 @@ export default function Caustics() {
     resize();
     window.addEventListener('resize', resize);
 
+    // Pause shader work whenever the caustics canvas is offscreen.
+    let visible = true;
+    const io = new IntersectionObserver(
+      (entries) => { visible = entries[0]?.isIntersecting ?? false; },
+      { threshold: 0 },
+    );
+    io.observe(canvas);
+
     const start = performance.now();
     function frame(now: number) {
+      if (!visible) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const t = (now - start) / 1000;
       gl!.uniform1f(uTime, t);
       gl!.uniform2f(uRes, canvas!.width, canvas!.height);
@@ -100,6 +113,7 @@ export default function Caustics() {
 
     return () => {
       cancelAnimationFrame(raf);
+      io.disconnect();
       window.removeEventListener('resize', resize);
     };
   }, [full]);

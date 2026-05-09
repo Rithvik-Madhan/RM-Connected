@@ -1,6 +1,7 @@
 ---
 import RevealOnScroll from '../../fx/RevealOnScroll.tsx';
 import ParallaxImage from '../../fx/ParallaxImage.tsx';
+import Caustics from '../../motion/Caustics.client.tsx';
 
 interface Photo { src: string; alt: string; caption?: string; }
 interface Props { photos?: Photo[]; }
@@ -8,12 +9,16 @@ interface Props { photos?: Photo[]; }
 const { photos = [] } = Astro.props as Props;
 ---
 <section
-  class="pin-zone py-32 overflow-hidden"
+  class="pin-zone py-32 overflow-hidden relative"
   data-zone-name="twilight"
   id="zone-twilight"
-  style="background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);"
+  style="background: linear-gradient(180deg, #4A87B0 0%, #335E80 45%, #1F3F5C 100%);"
 >
-  <div class="container mx-auto px-6">
+  <div class="twilight-caustics" aria-hidden="true">
+    <Caustics client:visible />
+  </div>
+
+  <div class="container mx-auto px-6 relative z-10">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
       <!-- Pinned heading column -->
       <div class="lg:col-span-4 lg:sticky lg:top-32 lg:self-start">
@@ -54,3 +59,17 @@ const { photos = [] } = Astro.props as Props;
     </div>
   </div>
 </section>
+
+<style>
+  /* Caustics fade out toward the bottom — the deeper you go, the less surface
+     light reaches you. Concentrated at the top to read as "just submerged". */
+  .twilight-caustics {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    -webkit-mask-image: linear-gradient(180deg, black 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.25) 65%, transparent 100%);
+            mask-image: linear-gradient(180deg, black 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.25) 65%, transparent 100%);
+    opacity: 0.85;
+  }
+</style>
