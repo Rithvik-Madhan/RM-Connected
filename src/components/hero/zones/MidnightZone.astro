@@ -18,7 +18,7 @@ const { posts = [] } = Astro.props as Props;
   class="pin-zone py-32 overflow-hidden relative"
   data-zone-name="midnight"
   id="zone-midnight"
-  style="background: linear-gradient(180deg, #1F3F5C 0%, #102538 50%, #06121F 100%);"
+  style="--d-fg: #D6DCE5; --d-fg-muted: #9CAABD; --d-accent: #7BFFB1; --d-accent-2: #F4D27A; --d-rule: rgba(214, 220, 229, 0.10); color: var(--d-fg); background: linear-gradient(180deg, #1F3F5C 0%, #102538 50%, #06121F 100%);"
 >
   <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
     <Bioluminescence client:visible intensity={0.4} />

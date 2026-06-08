@@ -48,13 +48,16 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
       <!-- Static fallback gradient — visible when reduced-motion / low-power -->
       <div class="ocean-base"></div>
       <!-- Animated WebGL water -->
-      <OceanSurface client:visible sunX={0.5} />
+      <OceanSurface client:visible sunX={0.58} />
+      <div class="surface-sheen"></div>
+      <div class="wave-lines"></div>
+      <div class="underwater-rays"></div>
       <div class="horizon-line"></div>
     </div>
   </div>
 
-  <div class="relative z-10 container mx-auto px-6 min-h-screen flex flex-col items-center justify-center">
-    <p class="meta mb-6 opacity-70">Field notes from above and below the surface</p>
+  <div class="relative z-10 container mx-auto px-6 min-h-screen flex flex-col items-center justify-start pt-[11vh] sm:pt-[10vh]">
+    <p class="meta mb-6 opacity-75">Field notes from above and below the surface</p>
 
     <h1
       class="font-display text-balance text-center font-light leading-[0.92] tracking-tightish"
@@ -65,7 +68,7 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
         >v</span><span class="reveal-letter">i</span><span class="reveal-letter">k</span>
     </h1>
 
-    <p class="mt-8 max-w-xl text-center text-lg sm:text-xl text-pretty" style="color: var(--d-fg-muted);">
+    <p class="mt-7 max-w-xl text-center text-lg sm:text-xl text-pretty hero-subtitle" style="color: var(--d-fg-muted);">
       Marine biology student. Scuba diver. Eagle Scout. Photographer of the deep — and quietly, of the trail.
     </p>
 
@@ -74,7 +77,7 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
       <span aria-hidden="true" class="hero-link-arrow">→</span>
     </a>
 
-    <a href="#zone-twilight" class="descend-prompt mt-16 group inline-flex flex-col items-center gap-3" aria-label="Descend to next section">
+    <a href="#zone-twilight" class="descend-prompt mt-[18vh] sm:mt-[20vh] group inline-flex flex-col items-center gap-3" aria-label="Descend to next section">
       <span class="meta opacity-0 group-hover:opacity-100 transition-opacity">Descend</span>
       <svg width="22" height="36" viewBox="0 0 22 36" fill="none" aria-hidden="true">
         <path d="M11 1v30m0 0l-9-9m9 9l9-9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
@@ -134,24 +137,74 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
       rgba(220, 238, 247, 0.85) 100%
     );
   }
-  /* Ocean surface at the bottom of the section — clearly delineated horizon. */
+
+  /* The ocean now owns the lower half of the hero instead of feeling like a thin stripe. */
   .ocean-surface {
-    position: absolute; left: 0; right: 0; bottom: 0; height: 25%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 37%;
     overflow: hidden;
+    z-index: 2;
+    background: #4a87b0;
   }
-  /* Static fallback gradient (visible only when WebGL canvas isn't rendered).
-     Bottom color #4A87B0 matches TwilightZone's top color exactly. */
   .ocean-base {
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg,
-      #C9E0EA 0%, #88B8D1 28%, #6BA1C2 60%, #4A87B0 100%
-    );
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg,
+        #e4f5f8 0%,
+        #a9d9e7 10%,
+        #68a9ca 34%,
+        #3e7fa8 66%,
+        #2f6f98 100%
+      );
   }
-  /* Crisp horizon line where sky meets water — drawn last so it's on top. */
+  .surface-sheen {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 34% 18% at 58% 7%, rgba(255,255,245,0.95), rgba(255,248,210,0.34) 32%, rgba(255,248,210,0) 70%),
+      linear-gradient(180deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.10) 8%, transparent 23%);
+    mix-blend-mode: screen;
+  }
+  .wave-lines {
+    position: absolute;
+    inset: -6% 0 0;
+    opacity: 0.74;
+    background:
+      repeating-linear-gradient(176deg,
+        rgba(255,255,255,0.00) 0 18px,
+        rgba(255,255,255,0.42) 20px 22px,
+        rgba(11,65,95,0.18) 25px 30px,
+        rgba(255,255,255,0.00) 34px 54px
+      );
+    transform: perspective(720px) rotateX(58deg) translateY(-18%);
+    transform-origin: top center;
+    filter: blur(1.6px);
+    mix-blend-mode: soft-light;
+  }
+  .underwater-rays {
+    position: absolute;
+    inset: 4% 0 0;
+    background:
+      linear-gradient(105deg, transparent 0 35%, rgba(218,246,255,0.16) 43%, transparent 52%),
+      linear-gradient(78deg, transparent 0 53%, rgba(218,246,255,0.10) 61%, transparent 70%),
+      linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 45%);
+    opacity: 0.72;
+    mix-blend-mode: screen;
+  }
   .horizon-line {
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: rgba(255, 255, 255, 0.85);
-    box-shadow: 0 0 12px 2px rgba(255, 252, 230, 0.55);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow:
+      0 0 18px 4px rgba(255, 252, 230, 0.72),
+      0 8px 24px rgba(68, 139, 176, 0.28);
   }
 
   .reveal-letter {
@@ -168,6 +221,9 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
   .reveal-letter:nth-child(6) { animation-delay: 500ms; }
   .reveal-letter:nth-child(7) { animation-delay: 580ms; }
 
+  .hero-subtitle {
+    text-shadow: 0 1px 18px rgba(255,255,255,0.42);
+  }
   .hero-link {
     color: var(--d-fg);
     opacity: 0;
@@ -178,34 +234,26 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
     transition: text-decoration-color 280ms ease, color 280ms ease;
     animation: descend-fade 700ms ease-out 1.3s forwards;
   }
-  .hero-link:hover {
-    text-decoration-color: var(--d-fg);
-  }
+  .hero-link:hover { text-decoration-color: var(--d-fg); }
   .hero-link-arrow {
     display: inline-block;
     transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  .hero-link:hover .hero-link-arrow {
-    transform: translateX(4px);
-  }
+  .hero-link:hover .hero-link-arrow { transform: translateX(4px); }
 
   .descend-prompt {
-    color: var(--d-fg-muted);
+    color: color-mix(in srgb, var(--d-fg) 80%, #ffffff 20%);
     opacity: 0;
     animation: descend-fade 700ms ease-out 1.6s forwards;
+    text-shadow: 0 1px 12px rgba(255,255,255,0.35);
   }
-  .descend-prompt svg {
-    animation: descend-bob 2.4s ease-in-out infinite 2.5s;
-  }
+  .descend-prompt svg { animation: descend-bob 2.4s ease-in-out infinite 2.5s; }
 
-  @keyframes letter-rise {
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes descend-fade {
-    to { opacity: 1; }
-  }
-  @keyframes descend-bob {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(6px); }
+  @keyframes letter-rise { to { opacity: 1; transform: translateY(0); } }
+  @keyframes descend-fade { to { opacity: 1; } }
+  @keyframes descend-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+  @media (max-width: 640px) {
+    .ocean-surface { height: 36%; }
   }
 </style>

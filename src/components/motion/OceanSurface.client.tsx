@@ -46,12 +46,11 @@ void main() {
   vec2 waveUv = vec2(uv.x * 3.2, (1.0 - uv.y) * 9.5);
   float h = fbm(waveUv, uTime);
 
-  // Base water color: brighter at horizon, medium-clear close to viewer.
-  // Sunlit zone is shallow (0-200m); water reads as bright tropical blue,
-  // not deep navy. Bottom color (#4A87B0) matches the top of TwilightZone
-  // exactly so the section seam is invisible.
-  vec3 nearH = vec3(0.79, 0.88, 0.92);  // ~#C9E0EA pale at horizon
-  vec3 farH  = vec3(0.29, 0.53, 0.69);  // ~#4A87B0 medium-clear deep view
+  // Base water color: brighter at horizon, richer blue close to viewer.
+  // Sunlit zone is shallow (0-200m); water reads as bright coastal surface,
+  // then deepens into the next section's blue without a hard seam.
+  vec3 nearH = vec3(0.88, 0.96, 0.98);  // pale horizon foam / reflected sky
+  vec3 farH  = vec3(0.18, 0.44, 0.60);  // ~#2F6F98 deeper foreground, matches twilight entry
   vec3 base  = mix(farH, nearH, smoothstep(0.0, 1.0, uv.y));
 
   // Wave shading: peaks brighter, troughs darker — gives the surface form.

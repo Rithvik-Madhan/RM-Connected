@@ -12,7 +12,7 @@ const { photos = [] } = Astro.props as Props;
   class="pin-zone py-32 overflow-hidden relative"
   data-zone-name="twilight"
   id="zone-twilight"
-  style="background: linear-gradient(180deg, #4A87B0 0%, #335E80 45%, #1F3F5C 100%);"
+  style="--d-fg: #E8F1F5; --d-fg-muted: #BFD3DD; --d-accent: #F4D27A; --d-rule: rgba(232, 241, 245, 0.14); color: var(--d-fg); background: linear-gradient(180deg, #2F6F98 0%, #285B80 42%, #1F3F5C 100%);"
 >
   <div class="twilight-caustics" aria-hidden="true">
     <Caustics client:visible />

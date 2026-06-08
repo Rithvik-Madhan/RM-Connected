@@ -15,7 +15,7 @@ const { achievements = [] } = Astro.props as Props;
   class="pin-zone py-40 overflow-hidden relative"
   data-zone-name="abyss"
   id="zone-abyss"
-  style="background: linear-gradient(180deg, #06121F 0%, #03060B 60%, #03060B 100%);"
+  style="--d-fg: #E0DAC8; --d-fg-muted: #A9A08C; --d-accent: #7BFFB1; --d-accent-2: #F4D27A; --d-rule: rgba(224, 218, 200, 0.10); color: var(--d-fg); background: linear-gradient(180deg, #06121F 0%, #03060B 60%, #03060B 100%);"
 >
   <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
     <Bioluminescence client:visible intensity={1.0} />
