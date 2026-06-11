@@ -1,11 +1,13 @@
 export type DepthZone = 'sunlit' | 'twilight' | 'midnight' | 'abyss' | 'surface';
 
-/** Each zone occupies a fraction of total scroll progress on home. Order matters. */
+/** Each zone occupies a fraction of total scroll progress on home. Order matters.
+ * Calibrated against actual section heights (incl. the ascent strip before
+ * the surface section) — the long surface tail is the ride back up. */
 export const ZONE_BOUNDS: Array<{ zone: DepthZone; end: number; depthM: number }> = [
-  { zone: 'sunlit',   end: 0.18, depthM: 200   },
-  { zone: 'twilight', end: 0.45, depthM: 1000  },
-  { zone: 'midnight', end: 0.72, depthM: 4000  },
-  { zone: 'abyss',    end: 0.92, depthM: 6000  },
+  { zone: 'sunlit',   end: 0.13, depthM: 200   },
+  { zone: 'twilight', end: 0.43, depthM: 1000  },
+  { zone: 'midnight', end: 0.67, depthM: 4000  },
+  { zone: 'abyss',    end: 0.83, depthM: 6000  },
   { zone: 'surface',  end: 1.00, depthM: 0     },
 ];
 

@@ -3,6 +3,7 @@ import SunlitZone from './zones/SunlitZone.astro';
 import TwilightZone from './zones/TwilightZone.astro';
 import MidnightZone from './zones/MidnightZone.astro';
 import AbyssZone from './zones/AbyssZone.astro';
+import AscentZone from './zones/AscentZone.astro';
 import ResurfaceZone from './zones/ResurfaceZone.astro';
 import DepthMeter from './DepthMeter.tsx';
 import HomeNav from './HomeNav.astro';
@@ -39,5 +40,6 @@ const { achievements, featuredPhotos, featuredPosts } = Astro.props;
   <TwilightZone photos={featuredPhotos} />
   <MidnightZone posts={featuredPosts} />
   <AbyssZone achievements={achievements} />
+  <AscentZone />
   <ResurfaceZone />
 </div>

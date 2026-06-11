@@ -1,0 +1,65 @@
+---
+import Bubbles from '../../motion/Bubbles.client.tsx';
+---
+<!-- Purely atmospheric: the slow ride back up from the abyss to daylight.
+     No content — just the water column getting lighter, rays appearing,
+     and exhaled bubbles racing past. -->
+<section
+  class="ascent relative overflow-hidden"
+  data-zone-name="ascent"
+  id="zone-ascent"
+  aria-hidden="true"
+>
+  <div class="ascent-rays"></div>
+  <div class="ascent-bubbles">
+    <Bubbles client:visible count={20} opacity={0.85} />
+  </div>
+</section>
+
+<style>
+  /* Retraces the dive's palette in reverse: abyss black through midnight,
+     twilight, and coastal blue, surfacing into the same pale aqua the
+     final section opens with. */
+  .ascent {
+    height: 150vh;
+    background: linear-gradient(180deg,
+      #03060B 0%,
+      #06121F 16%,
+      #102538 32%,
+      #1F3F5C 48%,
+      #2F6F98 64%,
+      #5E97BB 78%,
+      #A9D3E5 90%,
+      #E2F4F8 100%
+    );
+  }
+
+  /* Sunbeams reaching down to meet you — faint where the water is still
+     dark, strongest just before you break the surface. */
+  .ascent-rays {
+    position: absolute;
+    left: -4%; right: -4%;
+    top: 30%; bottom: 0;
+    background:
+      linear-gradient(99deg,  transparent 12%, rgba(214, 240, 252, 0.12) 18%, transparent 27%),
+      linear-gradient(92deg,  transparent 40%, rgba(214, 240, 252, 0.16) 47%, transparent 56%),
+      linear-gradient(84deg,  transparent 64%, rgba(214, 240, 252, 0.10) 70%, transparent 78%),
+      linear-gradient(76deg,  transparent 82%, rgba(214, 240, 252, 0.13) 88%, transparent 96%);
+    mix-blend-mode: screen;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 45%, black 80%, rgba(0,0,0,0.35) 100%);
+            mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 45%, black 80%, rgba(0,0,0,0.35) 100%);
+    transform-origin: bottom center;
+    animation: ascent-rays-sway 18s ease-in-out infinite alternate;
+  }
+  @keyframes ascent-rays-sway {
+    from { transform: skewX(1.4deg);  opacity: 0.85; }
+    to   { transform: skewX(-1.4deg); opacity: 1; }
+  }
+
+  .ascent-bubbles {
+    position: absolute;
+    top: 8%; left: 0; right: 0;
+    bottom: 6%;
+    pointer-events: none;
+  }
+</style>
