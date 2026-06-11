@@ -41,10 +41,12 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uRes;
   // gl_FragCoord origin is bottom-left, so uv.y near 1.0 = horizon (top of ocean band).
 
-  // Wave-shaped UV: stretch horizontally so noise reads as long shallow waves
-  // rather than blob-noise. Higher vertical scale = denser bands closer to viewer.
-  vec2 waveUv = vec2(uv.x * 3.2, (1.0 - uv.y) * 9.5);
-  float h = fbm(waveUv, uTime);
+  // Perspective wave field: rows compress toward the horizon and stretch
+  // toward the viewer, and near water drifts faster — reads as a receding
+  // surface instead of a flat noise wall.
+  float persp = 1.0 - uv.y;
+  vec2 waveUv = vec2(uv.x * (2.2 + persp * 2.6), pow(persp, 1.35) * 11.0);
+  float h = fbm(waveUv, uTime * (0.7 + persp * 0.9));
 
   // Base water color: brighter at horizon, richer blue close to viewer.
   // Sunlit zone is shallow (0-200m); water reads as bright coastal surface,
@@ -56,16 +58,31 @@ void main() {
   // Wave shading: peaks brighter, troughs darker — gives the surface form.
   float waveBright = smoothstep(0.46, 0.64, h) * 0.30 - smoothstep(0.42, 0.22, h) * 0.18;
 
-  // Sun reflection band: bright vertical column under the sun, fading toward viewer.
+  // Sun glitter path: narrow at the horizon, widening toward the viewer,
+  // like a real specular column on open water.
   float dx = abs(uv.x - uSunX);
-  float sunBand = smoothstep(0.18, 0.0, dx);
+  float bandW = mix(0.035, 0.20, pow(persp, 0.8));
+  float sunBand = smoothstep(bandW, 0.0, dx);
   sunBand *= smoothstep(0.0, 0.55, uv.y);
 
   // Sparkles: high-frequency noise gated by the sun band — wave crests catching light.
   float sparkleN = fbm(waveUv * 3.6, uTime * 1.8);
-  float sparkle  = smoothstep(0.68, 0.88, sparkleN) * sunBand * 1.6;
+  float sparkle  = smoothstep(0.66, 0.86, sparkleN) * sunBand * 1.7;
+
+  // Texture relaxes near the bottom edge so the animated band dissolves
+  // into the twilight section's flat gradient with no visible cutoff.
+  float seamFade = smoothstep(0.0, 0.22, uv.y);
+  waveBright *= seamFade;
+  sparkle    *= seamFade;
 
   vec3 col = base + waveBright + sunBand * 0.40 + sparkle * vec3(1.0, 0.96, 0.82);
+
+  // Atmospheric fog: the waterline melts into the sky haze instead of
+  // meeting it at a razor edge.
+  vec3 hazeCol = vec3(0.905, 0.955, 0.975);
+  float fog = smoothstep(0.84, 1.0, uv.y);
+  col = mix(col, hazeCol, fog * 0.85);
+
   gl_FragColor = vec4(col, 1.0);
 }
 `;

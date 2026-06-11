@@ -50,7 +50,6 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
       <!-- Animated WebGL water -->
       <OceanSurface client:visible sunX={0.58} />
       <div class="surface-sheen"></div>
-      <div class="wave-lines"></div>
       <div class="underwater-rays"></div>
       <div class="horizon-line"></div>
     </div>
@@ -105,26 +104,30 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
       rgba(232, 246, 251, 0) 100%
     );
   }
-  /* Soft central sun bloom. */
+  /* Soft central sun bloom — horizontally aligned with the glitter path on the water (sunX = 0.58). */
   .sun-glow {
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse 36% 24% at 50% 56%, rgba(255, 252, 235, 0.95) 0%, rgba(255, 248, 220, 0.45) 22%, rgba(255, 248, 220, 0.0) 60%),
-      radial-gradient(ellipse 14% 9% at 50% 56%, rgba(255, 255, 250, 1) 0%, rgba(255, 255, 250, 0) 70%);
+      radial-gradient(ellipse 36% 24% at 58% 56%, rgba(255, 252, 235, 0.95) 0%, rgba(255, 248, 220, 0.45) 22%, rgba(255, 248, 220, 0.0) 60%),
+      radial-gradient(ellipse 14% 9% at 58% 56%, rgba(255, 255, 250, 1) 0%, rgba(255, 255, 250, 0) 70%);
   }
-  /* Big puffy cumulus, concentrated in upper-mid altitude. */
-  .cloud-layer { position: absolute; inset: 0; }
+  /* Big puffy cumulus, concentrated in upper-mid altitude. Layers are slightly
+     oversized so the slow drift never exposes an edge. */
+  .cloud-layer { position: absolute; inset: 0 -3%; }
   .cloud-layer svg { display: block; width: 100%; height: 100%; }
   .cloud-puffy {
     mix-blend-mode: screen;
     opacity: 0.95;
+    animation: cloud-drift 160s ease-in-out infinite alternate;
     -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, black 25%, black 55%, rgba(0,0,0,0.4) 80%, transparent 95%);
             mask-image: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, black 25%, black 55%, rgba(0,0,0,0.4) 80%, transparent 95%);
   }
-  /* Smaller wispy detail spread a bit wider. */
+  /* Smaller wispy detail spread a bit wider. Drifts opposite the cumulus,
+     slightly faster — cheap two-plane parallax. */
   .cloud-wisp {
     mix-blend-mode: screen;
     opacity: 0.55;
+    animation: cloud-drift 95s ease-in-out infinite alternate-reverse;
     -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, black 25%, black 65%, rgba(0,0,0,0.3) 85%, transparent 96%);
             mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, black 25%, black 65%, rgba(0,0,0,0.3) 85%, transparent 96%);
   }
@@ -169,22 +172,6 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
       linear-gradient(180deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.10) 8%, transparent 23%);
     mix-blend-mode: screen;
   }
-  .wave-lines {
-    position: absolute;
-    inset: -6% 0 0;
-    opacity: 0.74;
-    background:
-      repeating-linear-gradient(176deg,
-        rgba(255,255,255,0.00) 0 18px,
-        rgba(255,255,255,0.42) 20px 22px,
-        rgba(11,65,95,0.18) 25px 30px,
-        rgba(255,255,255,0.00) 34px 54px
-      );
-    transform: perspective(720px) rotateX(58deg) translateY(-18%);
-    transform-origin: top center;
-    filter: blur(1.6px);
-    mix-blend-mode: soft-light;
-  }
   .underwater-rays {
     position: absolute;
     inset: 4% 0 0;
@@ -195,16 +182,20 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
     opacity: 0.72;
     mix-blend-mode: screen;
   }
+  /* Horizon reads as a bright haze band, strongest under the sun, rather
+     than a razor edge — the shader's fog does most of the blending. */
   .horizon-line {
     position: absolute;
-    top: 0;
+    top: -10px;
     left: 0;
     right: 0;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow:
-      0 0 18px 4px rgba(255, 252, 230, 0.72),
-      0 8px 24px rgba(68, 139, 176, 0.28);
+    height: 20px;
+    background: radial-gradient(ellipse 55% 100% at 58% 50%,
+      rgba(255, 253, 240, 0.85) 0%,
+      rgba(255, 255, 255, 0.45) 40%,
+      rgba(255, 255, 255, 0) 75%
+    );
+    filter: blur(4px);
   }
 
   .reveal-letter {
@@ -250,6 +241,10 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
   .descend-prompt svg { animation: descend-bob 2.4s ease-in-out infinite 2.5s; }
 
   @keyframes letter-rise { to { opacity: 1; transform: translateY(0); } }
+  @keyframes cloud-drift {
+    from { transform: translateX(-1.4%); }
+    to   { transform: translateX(1.4%); }
+  }
   @keyframes descend-fade { to { opacity: 1; } }
   @keyframes descend-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 
