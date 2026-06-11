@@ -9,6 +9,7 @@ import DepthMeter from './DepthMeter.tsx';
 import HomeNav from './HomeNav.astro';
 import ScrollProgress from '../motion/ScrollProgress.tsx';
 import PaletteScroll from '../motion/PaletteScroll.client.tsx';
+import DepthFx from '../motion/DepthFx.client.tsx';
 
 interface Props {
   achievements: Array<{
@@ -34,6 +35,7 @@ const { achievements, featuredPhotos, featuredPosts } = Astro.props;
 <div id="dive-root" class="relative">
   <PaletteScroll client:load />
   <ScrollProgress client:idle />
+  <DepthFx client:idle />
   <DepthMeter client:idle />
   <HomeNav />
   <SunlitZone />

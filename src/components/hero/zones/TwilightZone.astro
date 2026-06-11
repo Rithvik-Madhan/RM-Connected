@@ -16,7 +16,7 @@ const { photos = [] } = Astro.props as Props;
   id="zone-twilight"
   style="--d-fg: #E8F1F5; --d-fg-muted: #BFD3DD; --d-accent: #F4D27A; --d-rule: rgba(232, 241, 245, 0.14); color: var(--d-fg); background: linear-gradient(180deg, #2F6F98 0%, #285B80 42%, #1F3F5C 100%);"
 >
-  <div class="twilight-caustics" aria-hidden="true">
+  <div class="twilight-caustics" data-depth="0.22" aria-hidden="true">
     <Caustics client:visible />
   </div>
   <div class="entry-glow" aria-hidden="true"></div>
@@ -24,8 +24,8 @@ const { photos = [] } = Astro.props as Props;
   <div class="entry-bubbles" aria-hidden="true">
     <Bubbles client:visible count={16} />
   </div>
-  <div class="ambient-fish" aria-hidden="true">
-    <AmbientFish client:visible variant="silhouette" spawnEvery={13} />
+  <div class="ambient-fish" data-depth="0.12" aria-hidden="true">
+    <AmbientFish client:visible variant="silhouette" spawnEvery={13} giant />
   </div>
 
   <div class="container mx-auto px-6 relative z-10">
@@ -36,6 +36,7 @@ const { photos = [] } = Astro.props as Props;
         <h2
           class="font-display font-light leading-[0.95] tracking-tightish"
           style="font-size: clamp(2.5rem, 5.6vw, 5rem); font-variation-settings: 'SOFT' 30, 'WONK' 0;"
+          data-dolly
         >
           What I find<br/>down there.
         </h2>
@@ -48,7 +49,7 @@ const { photos = [] } = Astro.props as Props;
       <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
         {photos.map((p, i) => (
           <RevealOnScroll client:visible delay={i * 0.05} className={i % 3 === 0 ? 'sm:col-span-2 sm:row-span-2' : ''}>
-            <figure class="group">
+            <figure class="group" data-tilt>
               <div class={`relative ${i % 3 === 0 ? 'aspect-[4/3]' : 'aspect-[3/4]'} overflow-hidden rounded-sm`}>
                 <ParallaxImage
                   client:visible

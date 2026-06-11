@@ -24,8 +24,8 @@ const { posts = [] } = Astro.props as Props;
   <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
     <Bioluminescence client:visible intensity={0.4} />
   </div>
-  <div class="absolute left-0 right-0 pointer-events-none" style="top: 6%; height: min(130vh, 90%);" aria-hidden="true">
-    <AmbientFish client:visible variant="lantern" spawnEvery={18} />
+  <div class="absolute left-0 right-0 pointer-events-none" style="top: 6%; height: min(130vh, 90%);" data-depth="0.12" aria-hidden="true">
+    <AmbientFish client:visible variant="lantern" spawnEvery={18} giant />
   </div>
   <div class="container mx-auto px-6 relative z-10">
     <div class="max-w-2xl mb-20">
@@ -33,6 +33,7 @@ const { posts = [] } = Astro.props as Props;
       <h2
         class="font-display font-light leading-[0.95] tracking-tightish"
         style="font-size: clamp(2.5rem, 5.6vw, 5rem); font-variation-settings: 'SOFT' 30;"
+        data-dolly
       >
         Field notes,<br/>quietly written.
       </h2>
@@ -45,7 +46,7 @@ const { posts = [] } = Astro.props as Props;
       {posts.map((post, i) => (
         <RevealOnScroll client:visible delay={i * 0.08}>
           <a href={post.href} class="group grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-            <div class="md:col-span-5 aspect-[4/3] overflow-hidden rounded-sm">
+            <div class="md:col-span-5 aspect-[4/3] overflow-hidden rounded-sm" data-tilt>
               <img
                 src={post.image}
                 alt=""
