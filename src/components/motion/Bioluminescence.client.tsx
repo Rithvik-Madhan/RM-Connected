@@ -1,72 +1,50 @@
 import { useEffect, useRef } from 'react';
 import { useFullExperience } from '../../lib/hooks/useReducedMotion';
-import { emitDisturbance, activeDisturbances } from '../../lib/motion/disturbance';
+import { createImpulseDrain } from '../../lib/motion/disturbance';
 
 interface Props {
   /** 0..1 — controls particle density. Midnight ~0.4, Abyss ~1.0. */
   intensity?: number;
 }
 
-const TRAIL_MAX = 24;
-const TRAIL_LIFE_MS = 520;
-const TRAIL_RADIUS = 90;
-const TRAIL_MIN_DIST = 5;
+// Coarse velocity field over the viewport. Water you can push.
+const GW = 40;
+const GH = 24;
 
 const VERT = `
-attribute vec3 position;
+attribute vec2 position;
 attribute float aSeed;
+attribute float aZ;
+attribute float aBoost;
 uniform float uTime;
 uniform vec2  uRes;
 uniform vec2  uViewport;
 uniform float uIntensity;
-uniform vec3  uTrail[${TRAIL_MAX}];
+uniform vec2  uParallax;
 varying float vSeed;
 varying float vAlpha;
 varying float vBoost;
 varying float vFlare;
 void main() {
   vSeed = aSeed;
-  // Drift slowly upward with horizontal sway.
-  float t = uTime * (0.04 + 0.04 * fract(aSeed * 13.0));
-  vec3 p = position;
-  p.y += mod(t * 60.0 + aSeed * 100.0, 800.0) - 400.0;
-  p.x += sin(t * 0.6 + aSeed * 6.28) * 30.0;
-
-  // Cursor disturbance trail: each active point brightens nearby plankton
-  // and gently pushes them outward, mimicking dinoflagellate agitation.
-  float boost = 0.0;
-  for (int i = 0; i < ${TRAIL_MAX}; i++) {
-    vec3 tr = uTrail[i];
-    if (tr.z > 0.0) {
-      vec2 d = p.xy - tr.xy;
-      float dist = length(d);
-      float falloff = 1.0 - smoothstep(0.0, ${TRAIL_RADIUS.toFixed(1)}, dist);
-      float contrib = falloff * tr.z;
-      boost += contrib;
-      if (dist > 0.001) {
-        p.xy += (d / dist) * contrib * 1.5;
-      }
-    }
-  }
-  // Clamp low so overlapping trail points form an even aura instead of
-  // bright cores — the goal is many small shimmers, not a few hot ones.
-  vBoost = clamp(boost, 0.0, 1.0);
+  vBoost = aBoost;
 
   // Rare slow flare: each mote occasionally swells bright for a few seconds —
   // the loner dinoflagellate firing on its own.
   vFlare = pow(0.5 + 0.5 * sin(uTime * (0.05 + fract(aSeed * 3.0) * 0.09) + aSeed * 100.0), 32.0);
 
-  // Particles live in CSS-pixel coordinates; map to clip space using the
-  // CSS viewport so they reach edge-to-edge on retina displays.
-  gl_Position = vec4(p.xy / (uViewport * 0.5), 0.0, 1.0);
-  // Size still uses physical pixels for crisp rendering on retina.
-  // Size distribution skews small — many faint motes, few large ones — and
-  // flaring motes swell slightly. Activated (trail) plankton stay the same
-  // size; only their brightness and color change, producing an "aura"
-  // instead of bloated hot dots.
-  gl_PointSize = (2.0 + pow(fract(aSeed * 31.0), 1.6) * 6.0) * uIntensity * (uRes.y / 600.0) * (1.0 + vFlare * 0.8);
-  // Twinkle at per-mote frequency — uniform pulsing reads as artificial.
-  vAlpha = 0.7 + 0.3 * (0.5 + 0.5 * sin(uTime * (0.8 + fract(aSeed * 5.0) * 1.4) + aSeed * 9.0));
+  // Pointer parallax: far motes (small z) trail the cursor more, giving the
+  // field real depth instead of a flat scatter.
+  vec2 p = position + uParallax * (1.0 - aZ) * 42.0;
+
+  gl_Position = vec4(p / (uViewport * 0.5), 0.0, 1.0);
+  // Size skews small, scales with depth (near = bigger), swells on flare.
+  gl_PointSize = (2.0 + pow(fract(aSeed * 31.0), 1.6) * 6.0)
+    * uIntensity * mix(0.55, 1.2, aZ) * (uRes.y / 600.0)
+    * (1.0 + vFlare * 0.8 + aBoost * 0.35);
+  // Twinkle at per-mote frequency, dimmer when farther away.
+  vAlpha = (0.7 + 0.3 * (0.5 + 0.5 * sin(uTime * (0.8 + fract(aSeed * 5.0) * 1.4) + aSeed * 9.0)))
+    * mix(0.45, 1.0, aZ);
 }
 `;
 
@@ -88,13 +66,20 @@ void main() {
   vec3 col = pick < 0.55 ? blue : (pick < 0.88 ? green : warm);
   // Flaring motes whiten toward pale cyan.
   col = mix(col, vec3(0.78, 0.95, 1.0), vFlare * 0.8);
-  // Boosted (agitated) particles surge toward electric bioluminescent blue.
-  col = mix(col, vec3(0.18, 0.42, 1.0), clamp(vBoost * 0.85, 0.0, 0.9));
-  float a = pow(1.0 - d * 2.0, 1.9) * vAlpha * (1.0 + vBoost * 1.4 + vFlare * 2.2);
+  // Agitated water makes plankton surge electric blue.
+  col = mix(col, vec3(0.18, 0.42, 1.0), clamp(vBoost * 0.9, 0.0, 0.9));
+  float a = pow(1.0 - d * 2.0, 1.9) * vAlpha * (1.0 + vBoost * 1.6 + vFlare * 2.2);
   gl_FragColor = vec4(col, a);
 }
 `;
 
+/**
+ * Bioluminescent plankton in water that actually moves. Particles ride a
+ * coarse velocity field; the cursor stirs it, clicks splash it, scrolling
+ * streams it past, fish wakes push it — and motes flash electric blue in
+ * proportion to how hard the water around them is being agitated, the way
+ * real dinoflagellates fire under shear.
+ */
 export default function Bioluminescence({ intensity = 1 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const full = useFullExperience();
@@ -121,80 +106,188 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
 
     const isMobile = window.innerWidth < 768;
     const COUNT = Math.round((isMobile ? 280 : 1100) * intensity);
-    const positions = new Float32Array(COUNT * 3);
-    const seeds = new Float32Array(COUNT);
+
+    // Particle state lives on the CPU now — positions advect through the
+    // flow field each frame and re-upload (a 1100-particle copy is cheap).
+    let VW = window.innerWidth;   // particle space extents (CSS px)
+    let VH = window.innerHeight;
+    const pos    = new Float32Array(COUNT * 2);
+    const seeds  = new Float32Array(COUNT);
+    const zs     = new Float32Array(COUNT);
+    const boosts = new Float32Array(COUNT);
+    const drift  = new Float32Array(COUNT);  // upward base speed px/s
     for (let i = 0; i < COUNT; i++) {
-      positions[i * 3 + 0] = (Math.random() - 0.5) * window.innerWidth;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * window.innerHeight;
-      positions[i * 3 + 2] = 0;
+      pos[i * 2 + 0] = (Math.random() - 0.5) * VW;
+      pos[i * 2 + 1] = (Math.random() - 0.5) * VH;
       seeds[i] = Math.random();
+      zs[i] = 0.35 + Math.pow(Math.random(), 1.4) * 0.65;
+      drift[i] = 5 + Math.random() * 9;
     }
-    const posBuf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-    const aPos = gl.getAttribLocation(prog, 'position');
-    gl.enableVertexAttribArray(aPos);
-    gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
 
-    const seedBuf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, seedBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, seeds, gl.STATIC_DRAW);
-    const aSeed = gl.getAttribLocation(prog, 'aSeed');
-    gl.enableVertexAttribArray(aSeed);
-    gl.vertexAttribPointer(aSeed, 1, gl.FLOAT, false, 0, 0);
+    function makeBuffer(data: Float32Array, attr: string, size: number, dynamic = false) {
+      const buf = gl!.createBuffer();
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, buf);
+      gl!.bufferData(gl!.ARRAY_BUFFER, data, dynamic ? gl!.DYNAMIC_DRAW : gl!.STATIC_DRAW);
+      const loc = gl!.getAttribLocation(prog, attr);
+      gl!.enableVertexAttribArray(loc);
+      gl!.vertexAttribPointer(loc, size, gl!.FLOAT, false, 0, 0);
+      return buf;
+    }
+    const posBuf = makeBuffer(pos, 'position', 2, true);
+    makeBuffer(seeds, 'aSeed', 1);
+    makeBuffer(zs, 'aZ', 1);
+    const boostBuf = makeBuffer(boosts, 'aBoost', 1, true);
 
-    const uTime  = gl.getUniformLocation(prog, 'uTime');
-    const uRes   = gl.getUniformLocation(prog, 'uRes');
-    const uView  = gl.getUniformLocation(prog, 'uViewport');
-    const uInt   = gl.getUniformLocation(prog, 'uIntensity');
-    const uTrail = gl.getUniformLocation(prog, 'uTrail[0]');
+    const uTime = gl.getUniformLocation(prog, 'uTime');
+    const uRes  = gl.getUniformLocation(prog, 'uRes');
+    const uView = gl.getUniformLocation(prog, 'uViewport');
+    const uInt  = gl.getUniformLocation(prog, 'uIntensity');
+    const uPar  = gl.getUniformLocation(prog, 'uParallax');
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      canvas!.width = window.innerWidth * dpr;
-      canvas!.height = window.innerHeight * dpr;
+      VW = window.innerWidth;
+      VH = window.innerHeight;
+      canvas!.width = VW * dpr;
+      canvas!.height = VH * dpr;
       gl!.viewport(0, 0, canvas!.width, canvas!.height);
     }
     resize();
     window.addEventListener('resize', resize);
 
-    // ---- Cursor disturbance trail ----
-    // Cursor emissions go through the shared bus (client coordinates), the
-    // same channel ambient fish use, so everything agitates plankton alike.
-    let lastEmitX = 0;
-    let lastEmitY = 0;
-    let mouseInside = false;
-    const trailData = new Float32Array(TRAIL_MAX * 3);
+    // ---- Velocity field ----
+    const fvx = new Float32Array(GW * GH);
+    const fvy = new Float32Array(GW * GH);
+    const tmpx = new Float32Array(GW * GH);
+    const tmpy = new Float32Array(GW * GH);
 
-    function onMove(e: MouseEvent) {
-      const rect = canvas!.getBoundingClientRect();
-      const inside =
-        e.clientX >= rect.left && e.clientX <= rect.right &&
-        e.clientY >= rect.top  && e.clientY <= rect.bottom;
-      if (!inside) { mouseInside = false; return; }
-
-      if (!mouseInside) {
-        lastEmitX = e.clientX; lastEmitY = e.clientY;
-        mouseInside = true;
-        return;
-      }
-
-      const dx = e.clientX - lastEmitX;
-      const dy = e.clientY - lastEmitY;
-      if (dx * dx + dy * dy >= TRAIL_MIN_DIST * TRAIL_MIN_DIST) {
-        emitDisturbance(e.clientX, e.clientY, 1, TRAIL_LIFE_MS);
-        lastEmitX = e.clientX; lastEmitY = e.clientY;
+    /** Splat a velocity impulse into the field. Particle-space coords (+y up). */
+    function splat(px: number, py: number, vx: number, vy: number, radius: number) {
+      // Map particle space (origin center) to grid indices.
+      const gx = ((px + VW / 2) / VW) * GW;
+      const gy = ((py + VH / 2) / VH) * GH;
+      const gr = Math.max(1.5, (radius / VW) * GW);
+      const x0 = Math.max(0, Math.floor(gx - gr * 2));
+      const x1 = Math.min(GW - 1, Math.ceil(gx + gr * 2));
+      const y0 = Math.max(0, Math.floor(gy - gr * 2));
+      const y1 = Math.min(GH - 1, Math.ceil(gy + gr * 2));
+      for (let yy = y0; yy <= y1; yy++) {
+        for (let xx = x0; xx <= x1; xx++) {
+          const dx = xx - gx;
+          const dy = yy - gy;
+          const w = Math.exp(-(dx * dx + dy * dy) / (gr * gr));
+          const idx = yy * GW + xx;
+          fvx[idx] += vx * w;
+          fvy[idx] += vy * w;
+        }
       }
     }
-    function onLeave() { mouseInside = false; }
-    window.addEventListener('mousemove', onMove, { passive: true });
-    window.addEventListener('mouseleave', onLeave);
 
-    // Pause shader work when the abyss zone is offscreen. The cursor trail
-    // mouse listener stays attached because emissions are ~free anyway.
+    /** Bilinear sample of the field at a particle-space point. */
+    function sample(px: number, py: number, out: { x: number; y: number }) {
+      const gx = Math.min(GW - 1.001, Math.max(0, ((px + VW / 2) / VW) * GW - 0.5));
+      const gy = Math.min(GH - 1.001, Math.max(0, ((py + VH / 2) / VH) * GH - 0.5));
+      const x0 = Math.floor(gx);
+      const y0 = Math.floor(gy);
+      const fx = gx - x0;
+      const fy = gy - y0;
+      const i00 = y0 * GW + x0;
+      const i10 = i00 + 1;
+      const i01 = i00 + GW;
+      const i11 = i01 + 1;
+      out.x = (fvx[i00] * (1 - fx) + fvx[i10] * fx) * (1 - fy) + (fvx[i01] * (1 - fx) + fvx[i11] * fx) * fy;
+      out.y = (fvy[i00] * (1 - fx) + fvy[i10] * fx) * (1 - fy) + (fvy[i01] * (1 - fx) + fvy[i11] * fx) * fy;
+    }
+
+    function stepField(dt: number) {
+      const decay = Math.exp(-dt * 1.7);
+      // One neighbor-mix pass spreads momentum outward — a poor man's
+      // diffusion that makes pushes bloom like swirls instead of staying
+      // as hard-edged stamps.
+      for (let y = 0; y < GH; y++) {
+        for (let x = 0; x < GW; x++) {
+          const i = y * GW + x;
+          const xm = x > 0 ? i - 1 : i;
+          const xp = x < GW - 1 ? i + 1 : i;
+          const ym = y > 0 ? i - GW : i;
+          const yp = y < GH - 1 ? i + GW : i;
+          tmpx[i] = (fvx[i] * 0.72 + (fvx[xm] + fvx[xp] + fvx[ym] + fvx[yp]) * 0.07) * decay;
+          tmpy[i] = (fvy[i] * 0.72 + (fvy[xm] + fvy[xp] + fvy[ym] + fvy[yp]) * 0.07) * decay;
+        }
+      }
+      fvx.set(tmpx);
+      fvy.set(tmpy);
+    }
+
+    // ---- Stirring: cursor, click splash, scroll stream, fish wakes ----
+    /** Convert a client-space point to particle space. The buffer is
+     * viewport-sized but CSS-stretched over the whole section, so we map
+     * through normalized section coordinates — this keeps cursor position
+     * and displayed plankton aligned at any scroll depth in the zone. */
+    let rect = canvas.getBoundingClientRect();
+    function toParticle(cx: number, cy: number): { x: number; y: number } | null {
+      if (cy < rect.top - 100 || cy > rect.bottom + 100) return null;
+      return {
+        x: ((cx - rect.left) / rect.width - 0.5) * VW,
+        y: -((cy - rect.top) / rect.height - 0.5) * VH,
+      };
+    }
+
+    let lastMx = 0;
+    let lastMy = 0;
+    let lastMt = 0;
+    function onMove(e: PointerEvent) {
+      rect = canvas!.getBoundingClientRect();
+      const p = toParticle(e.clientX, e.clientY);
+      const now = performance.now();
+      if (p && lastMt) {
+        const dt = Math.min((now - lastMt) / 1000, 0.1);
+        if (dt > 0.001) {
+          const vx = (e.clientX - lastMx) / dt;
+          const vy = -((e.clientY - lastMy) / dt);
+          const speed = Math.hypot(vx, vy);
+          if (speed > 1) {
+            const clamped = Math.min(speed, 1400) / speed;
+            splat(p.x, p.y, vx * clamped * 0.35, vy * clamped * 0.35, 60 + Math.min(speed, 1400) * 0.04);
+          }
+        }
+      }
+      lastMx = e.clientX;
+      lastMy = e.clientY;
+      lastMt = now;
+    }
+    function onDown(e: PointerEvent) {
+      rect = canvas!.getBoundingClientRect();
+      const p = toParticle(e.clientX, e.clientY);
+      if (!p) return;
+      // Radial splash — water shoved outward from the impact point.
+      for (let k = 0; k < 10; k++) {
+        const ang = (k / 10) * Math.PI * 2;
+        splat(p.x + Math.cos(ang) * 26, p.y + Math.sin(ang) * 26,
+              Math.cos(ang) * 520, Math.sin(ang) * 520, 46);
+      }
+    }
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerdown', onDown, { passive: true });
+
+    // Scrolling streams the whole water column past you.
+    let lastScrollY = window.scrollY;
+    let scrollBias = 0;
+    function onScroll() {
+      const dy = window.scrollY - lastScrollY;
+      lastScrollY = window.scrollY;
+      // Scroll down -> water streams upward past the viewer.
+      scrollBias += dy * 1.6;
+      scrollBias = Math.max(-900, Math.min(900, scrollBias));
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Fish and whale wakes arrive through the shared impulse bus.
+    const drain = createImpulseDrain();
+
     let visible = true;
     const io = new IntersectionObserver(
       (entries) => { visible = entries[0]?.isIntersecting ?? false; },
@@ -203,54 +296,95 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
     io.observe(canvas);
 
     const start = performance.now();
+    const flow = { x: 0, y: 0 };
+    let parX = 0;
+    let parY = 0;
+    let parTx = 0;
+    let parTy = 0;
+    function onPar(e: PointerEvent) {
+      parTx = (e.clientX / window.innerWidth) * 2 - 1;
+      parTy = -((e.clientY / window.innerHeight) * 2 - 1);
+    }
+    window.addEventListener('pointermove', onPar, { passive: true });
+
     let raf = 0;
+    let lastFrame = performance.now();
     function frame(now: number) {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min((now - lastFrame) / 1000, 0.05);
+      lastFrame = now;
       if (!visible) {
-        raf = requestAnimationFrame(frame);
+        // Keep the bus drained so impulses don't pile up while offscreen.
+        drain.drain();
+        scrollBias = 0;
         return;
       }
       const t = (now - start) / 1000;
 
-      // Pull live disturbances (cursor + fish) off the bus, convert from
-      // client space to particle space (origin at canvas center, +y up),
-      // and pack into the uniform array.
-      const live = activeDisturbances(now);
-      const rect = canvas!.getBoundingClientRect();
-      for (let i = 0; i < TRAIL_MAX; i++) {
-        if (i < live.length) {
-          const d = live[i];
-          const age = (now - d.born) / d.life;
-          // Quick onset, ease-out fade.
-          const onset = Math.min(age / 0.08, 1);
-          const decay = age >= 1 ? 0 : (1 - age) * (1 - age);
-          trailData[i * 3 + 0] = (d.cx - rect.left) - rect.width / 2;
-          trailData[i * 3 + 1] = -((d.cy - rect.top) - rect.height / 2);
-          trailData[i * 3 + 2] = onset * decay * d.strength;
-        } else {
-          trailData[i * 3 + 0] = 0;
-          trailData[i * 3 + 1] = 0;
-          trailData[i * 3 + 2] = 0;
-        }
+      // Fold external wakes into the field.
+      rect = canvas!.getBoundingClientRect();
+      for (const imp of drain.drain()) {
+        const p = toParticle(imp.cx, imp.cy);
+        if (p) splat(p.x, p.y, imp.vx * imp.strength, -imp.vy * imp.strength, imp.radius);
       }
+
+      stepField(dt);
+      scrollBias *= Math.exp(-dt * 2.4);
+
+      // Advect particles, light them by local water speed.
+      for (let i = 0; i < COUNT; i++) {
+        const z = zs[i];
+        let px = pos[i * 2 + 0];
+        let py = pos[i * 2 + 1];
+        sample(px, py, flow);
+        const fxv = flow.x * z;
+        const fyv = (flow.y + scrollBias) * z;
+        px += (Math.sin(t * 0.6 + seeds[i] * 6.28) * 6 + fxv) * dt;
+        py += (drift[i] + fyv) * dt;
+
+        // Wrap with margin so re-entry isn't visible.
+        const mx = VW / 2 + 30;
+        const my = VH / 2 + 30;
+        if (px > mx) px -= VW + 60; else if (px < -mx) px += VW + 60;
+        if (py > my) py -= VH + 60; else if (py < -my) py += VH + 60;
+        pos[i * 2 + 0] = px;
+        pos[i * 2 + 1] = py;
+
+        // Shear-triggered glow: rises fast with water speed, fades slow.
+        const speed = Math.hypot(fxv, fyv - scrollBias * z * 0.85);
+        const target = Math.min(speed / 230, 1);
+        boosts[i] += (target > boosts[i] ? 0.5 : 0.045) * (target - boosts[i]);
+      }
+
+      // Eased pointer parallax.
+      parX += (parTx - parX) * 0.05;
+      parY += (parTy - parY) * 0.05;
+
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, posBuf);
+      gl!.bufferSubData(gl!.ARRAY_BUFFER, 0, pos);
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, boostBuf);
+      gl!.bufferSubData(gl!.ARRAY_BUFFER, 0, boosts);
 
       gl!.clearColor(0, 0, 0, 0);
       gl!.clear(gl!.COLOR_BUFFER_BIT);
       gl!.uniform1f(uTime, t);
       gl!.uniform2f(uRes, canvas!.width, canvas!.height);
-      gl!.uniform2f(uView, window.innerWidth, window.innerHeight);
+      gl!.uniform2f(uView, VW, VH);
       gl!.uniform1f(uInt, intensity);
-      gl!.uniform3fv(uTrail, trailData);
+      gl!.uniform2f(uPar, parX, parY);
       gl!.drawArrays(gl!.POINTS, 0, COUNT);
-      raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
 
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
+      drain.dispose();
       window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseleave', onLeave);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointermove', onPar);
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('scroll', onScroll);
     };
   }, [full, intensity]);
 
