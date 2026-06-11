@@ -2,6 +2,8 @@
 import RevealOnScroll from '../../fx/RevealOnScroll.tsx';
 import ParallaxImage from '../../fx/ParallaxImage.tsx';
 import Caustics from '../../motion/Caustics.client.tsx';
+import Bubbles from '../../motion/Bubbles.client.tsx';
+import AmbientFish from '../../motion/AmbientFish.client.tsx';
 
 interface Photo { src: string; alt: string; caption?: string; }
 interface Props { photos?: Photo[]; }
@@ -16,6 +18,14 @@ const { photos = [] } = Astro.props as Props;
 >
   <div class="twilight-caustics" aria-hidden="true">
     <Caustics client:visible />
+  </div>
+  <div class="entry-glow" aria-hidden="true"></div>
+  <div class="entry-rays" aria-hidden="true"></div>
+  <div class="entry-bubbles" aria-hidden="true">
+    <Bubbles client:visible count={16} />
+  </div>
+  <div class="ambient-fish" aria-hidden="true">
+    <AmbientFish client:visible variant="silhouette" spawnEvery={13} />
   </div>
 
   <div class="container mx-auto px-6 relative z-10">
@@ -71,5 +81,64 @@ const { photos = [] } = Astro.props as Props;
     -webkit-mask-image: linear-gradient(180deg, black 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.25) 65%, transparent 100%);
             mask-image: linear-gradient(180deg, black 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.25) 65%, transparent 100%);
     opacity: 0.85;
+  }
+
+  /* Downwelling light just under the surface. Peak sits slightly below the
+     top edge so the seam with the sunlit zone's flat water stays invisible. */
+  .entry-glow {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 38%;
+    pointer-events: none;
+    z-index: 0;
+    background: linear-gradient(180deg,
+      rgba(190, 228, 245, 0) 0%,
+      rgba(190, 228, 245, 0.14) 7%,
+      rgba(190, 228, 245, 0.09) 40%,
+      rgba(190, 228, 245, 0) 100%
+    );
+    mix-blend-mode: screen;
+  }
+
+  /* God rays slanting down from the surface, swaying slowly. */
+  .entry-rays {
+    position: absolute;
+    top: -4%; left: -4%; right: -4%;
+    height: 72%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      linear-gradient(104deg, transparent 10%, rgba(208, 238, 252, 0.11) 16%, transparent 24%),
+      linear-gradient(96deg,  transparent 36%, rgba(208, 238, 252, 0.15) 44%, transparent 53%),
+      linear-gradient(88deg,  transparent 60%, rgba(208, 238, 252, 0.08) 66%, transparent 74%),
+      linear-gradient(80deg,  transparent 79%, rgba(208, 238, 252, 0.12) 86%, transparent 94%);
+    mix-blend-mode: screen;
+    -webkit-mask-image: linear-gradient(180deg, black 0%, rgba(0,0,0,0.6) 50%, transparent 92%);
+            mask-image: linear-gradient(180deg, black 0%, rgba(0,0,0,0.6) 50%, transparent 92%);
+    transform-origin: top center;
+    animation: rays-sway 16s ease-in-out infinite alternate;
+  }
+  @keyframes rays-sway {
+    from { transform: skewX(-1.6deg); opacity: 0.8; }
+    to   { transform: skewX(1.6deg);  opacity: 1; }
+  }
+
+  /* Diver's exhalation drifting back up toward the light. */
+  .entry-bubbles {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: min(90vh, 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Fish cross a viewport-height band so the canvas buffer stays small
+     even though the section is much taller. Behind the content (z-10). */
+  .ambient-fish {
+    position: absolute;
+    top: 4%; left: 0; right: 0;
+    height: min(120vh, 92%);
+    pointer-events: none;
+    z-index: 0;
   }
 </style>

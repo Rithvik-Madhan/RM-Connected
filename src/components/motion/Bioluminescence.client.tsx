@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useFullExperience } from '../../lib/hooks/useReducedMotion';
+import { emitDisturbance, activeDisturbances } from '../../lib/motion/disturbance';
 
 interface Props {
   /** 0..1 — controls particle density. Midnight ~0.4, Abyss ~1.0. */
   intensity?: number;
 }
 
-const TRAIL_MAX = 16;
+const TRAIL_MAX = 24;
 const TRAIL_LIFE_MS = 520;
 const TRAIL_RADIUS = 90;
 const TRAIL_MIN_DIST = 5;
@@ -22,6 +23,7 @@ uniform vec3  uTrail[${TRAIL_MAX}];
 varying float vSeed;
 varying float vAlpha;
 varying float vBoost;
+varying float vFlare;
 void main() {
   vSeed = aSeed;
   // Drift slowly upward with horizontal sway.
@@ -50,15 +52,21 @@ void main() {
   // bright cores — the goal is many small shimmers, not a few hot ones.
   vBoost = clamp(boost, 0.0, 1.0);
 
+  // Rare slow flare: each mote occasionally swells bright for a few seconds —
+  // the loner dinoflagellate firing on its own.
+  vFlare = pow(0.5 + 0.5 * sin(uTime * (0.05 + fract(aSeed * 3.0) * 0.09) + aSeed * 100.0), 32.0);
+
   // Particles live in CSS-pixel coordinates; map to clip space using the
   // CSS viewport so they reach edge-to-edge on retina displays.
   gl_Position = vec4(p.xy / (uViewport * 0.5), 0.0, 1.0);
   // Size still uses physical pixels for crisp rendering on retina.
-  // Activated plankton stay the same size as ambient — only their brightness
-  // and color change. This produces an "aura" instead of bloated hot dots.
-  gl_PointSize = (3.0 + fract(aSeed * 31.0) * 5.0) * uIntensity * (uRes.y / 600.0);
-  // Pulse alpha — higher floor so ambient shimmers stay visible at all times.
-  vAlpha = 0.7 + 0.3 * (0.5 + 0.5 * sin(uTime * 1.3 + aSeed * 9.0));
+  // Size distribution skews small — many faint motes, few large ones — and
+  // flaring motes swell slightly. Activated (trail) plankton stay the same
+  // size; only their brightness and color change, producing an "aura"
+  // instead of bloated hot dots.
+  gl_PointSize = (2.0 + pow(fract(aSeed * 31.0), 1.6) * 6.0) * uIntensity * (uRes.y / 600.0) * (1.0 + vFlare * 0.8);
+  // Twinkle at per-mote frequency — uniform pulsing reads as artificial.
+  vAlpha = 0.7 + 0.3 * (0.5 + 0.5 * sin(uTime * (0.8 + fract(aSeed * 5.0) * 1.4) + aSeed * 9.0));
 }
 `;
 
@@ -67,17 +75,22 @@ precision highp float;
 varying float vSeed;
 varying float vAlpha;
 varying float vBoost;
+varying float vFlare;
 void main() {
   vec2 c = gl_PointCoord - 0.5;
   float d = length(c);
   if (d > 0.5) discard;
-  // Soft glowing dot with tinted core (cyan-green vs. warm gold).
-  vec3 cool = vec3(0.48, 1.0, 0.69);   // #7BFFB1
-  vec3 warm = vec3(0.96, 0.82, 0.48);  // #F4D27A
-  vec3 col = mix(cool, warm, step(0.85, fract(vSeed * 7.0)));
-  // Boosted particles flare toward electric beach-bioluminescence blue.
+  // Mostly dinoflagellate cyan-blue, some green (site accent), rare warm gold.
+  vec3 blue  = vec3(0.30, 0.75, 0.98);
+  vec3 green = vec3(0.48, 1.0, 0.69);  // #7BFFB1
+  vec3 warm  = vec3(0.96, 0.82, 0.48); // #F4D27A
+  float pick = fract(vSeed * 7.0);
+  vec3 col = pick < 0.55 ? blue : (pick < 0.88 ? green : warm);
+  // Flaring motes whiten toward pale cyan.
+  col = mix(col, vec3(0.78, 0.95, 1.0), vFlare * 0.8);
+  // Boosted (agitated) particles surge toward electric bioluminescent blue.
   col = mix(col, vec3(0.18, 0.42, 1.0), clamp(vBoost * 0.85, 0.0, 0.9));
-  float a = pow(1.0 - d * 2.0, 1.9) * vAlpha * (1.0 + vBoost * 1.4);
+  float a = pow(1.0 - d * 2.0, 1.9) * vAlpha * (1.0 + vBoost * 1.4 + vFlare * 2.2);
   gl_FragColor = vec4(col, a);
 }
 `;
@@ -149,8 +162,8 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
     window.addEventListener('resize', resize);
 
     // ---- Cursor disturbance trail ----
-    type Disturbance = { x: number; y: number; born: number };
-    const trail: Disturbance[] = [];
+    // Cursor emissions go through the shared bus (client coordinates), the
+    // same channel ambient fish use, so everything agitates plankton alike.
     let lastEmitX = 0;
     let lastEmitY = 0;
     let mouseInside = false;
@@ -163,22 +176,17 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
         e.clientY >= rect.top  && e.clientY <= rect.bottom;
       if (!inside) { mouseInside = false; return; }
 
-      // Convert to particle space: origin at canvas center, +y up.
-      const mx =  (e.clientX - rect.left) - rect.width  / 2;
-      const my = -((e.clientY - rect.top)  - rect.height / 2);
-
       if (!mouseInside) {
-        lastEmitX = mx; lastEmitY = my;
+        lastEmitX = e.clientX; lastEmitY = e.clientY;
         mouseInside = true;
         return;
       }
 
-      const dx = mx - lastEmitX;
-      const dy = my - lastEmitY;
+      const dx = e.clientX - lastEmitX;
+      const dy = e.clientY - lastEmitY;
       if (dx * dx + dy * dy >= TRAIL_MIN_DIST * TRAIL_MIN_DIST) {
-        if (trail.length >= TRAIL_MAX) trail.shift();
-        trail.push({ x: mx, y: my, born: performance.now() });
-        lastEmitX = mx; lastEmitY = my;
+        emitDisturbance(e.clientX, e.clientY, 1, TRAIL_LIFE_MS);
+        lastEmitX = e.clientX; lastEmitY = e.clientY;
       }
     }
     function onLeave() { mouseInside = false; }
@@ -203,17 +211,21 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
       }
       const t = (now - start) / 1000;
 
-      // Decay trail and pack into uniform array.
-      while (trail.length && (now - trail[0].born) > TRAIL_LIFE_MS) trail.shift();
+      // Pull live disturbances (cursor + fish) off the bus, convert from
+      // client space to particle space (origin at canvas center, +y up),
+      // and pack into the uniform array.
+      const live = activeDisturbances(now);
+      const rect = canvas!.getBoundingClientRect();
       for (let i = 0; i < TRAIL_MAX; i++) {
-        if (i < trail.length) {
-          const age = (now - trail[i].born) / TRAIL_LIFE_MS;
+        if (i < live.length) {
+          const d = live[i];
+          const age = (now - d.born) / d.life;
           // Quick onset, ease-out fade.
           const onset = Math.min(age / 0.08, 1);
           const decay = age >= 1 ? 0 : (1 - age) * (1 - age);
-          trailData[i * 3 + 0] = trail[i].x;
-          trailData[i * 3 + 1] = trail[i].y;
-          trailData[i * 3 + 2] = onset * decay;
+          trailData[i * 3 + 0] = (d.cx - rect.left) - rect.width / 2;
+          trailData[i * 3 + 1] = -((d.cy - rect.top) - rect.height / 2);
+          trailData[i * 3 + 2] = onset * decay * d.strength;
         } else {
           trailData[i * 3 + 0] = 0;
           trailData[i * 3 + 1] = 0;

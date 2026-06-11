@@ -1,5 +1,6 @@
 ---
 import Bioluminescence from '../../motion/Bioluminescence.client.tsx';
+import AmbientFish from '../../motion/AmbientFish.client.tsx';
 import KelpCorner from '../../motion/KelpCorner.astro';
 
 interface Achievement {
@@ -19,6 +20,9 @@ const { achievements = [] } = Astro.props as Props;
 >
   <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
     <Bioluminescence client:visible intensity={1.0} />
+  </div>
+  <div class="absolute left-0 right-0 pointer-events-none" style="top: 8%; height: min(120vh, 88%);" aria-hidden="true">
+    <AmbientFish client:visible variant="lantern" spawnEvery={26} />
   </div>
 
   <KelpCorner position="tl" />
