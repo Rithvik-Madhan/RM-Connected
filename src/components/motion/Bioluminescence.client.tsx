@@ -3,83 +3,136 @@ import { useFullExperience } from '../../lib/hooks/useReducedMotion';
 import { createImpulseDrain } from '../../lib/motion/disturbance';
 
 interface Props {
-  /** 0..1 — controls particle density. Midnight ~0.4, Abyss ~1.0. */
+  /** 0..1 — scales how much glow interactions inject. */
   intensity?: number;
 }
 
-// Coarse velocity field over the viewport. Water you can push.
-const GW = 40;
-const GH = 24;
-
-const VERT = `
-attribute vec2 position;
-attribute float aSeed;
-attribute float aZ;
-attribute float aBoost;
-uniform float uTime;
-uniform vec2  uRes;
-uniform vec2  uViewport;
-uniform float uIntensity;
-uniform vec2  uParallax;
-varying float vSeed;
-varying float vAlpha;
-varying float vBoost;
-varying float vFlare;
-void main() {
-  vSeed = aSeed;
-  vBoost = aBoost;
-
-  // Rare slow flare: each mote occasionally swells bright for a few seconds —
-  // the loner dinoflagellate firing on its own.
-  vFlare = pow(0.5 + 0.5 * sin(uTime * (0.05 + fract(aSeed * 3.0) * 0.09) + aSeed * 100.0), 32.0);
-
-  // Pointer parallax: far motes (small z) trail the cursor more, giving the
-  // field real depth instead of a flat scatter.
-  vec2 p = position + uParallax * (1.0 - aZ) * 42.0;
-
-  gl_Position = vec4(p / (uViewport * 0.5), 0.0, 1.0);
-  // Size skews small, scales with depth (near = bigger), swells on flare.
-  gl_PointSize = (2.0 + pow(fract(aSeed * 31.0), 1.6) * 6.0)
-    * uIntensity * mix(0.55, 1.2, aZ) * (uRes.y / 600.0)
-    * (1.0 + vFlare * 0.8 + aBoost * 0.35);
-  // Twinkle at per-mote frequency, dimmer when farther away.
-  vAlpha = (0.7 + 0.3 * (0.5 + 0.5 * sin(uTime * (0.8 + fract(aSeed * 5.0) * 1.4) + aSeed * 9.0)))
-    * mix(0.45, 1.0, aZ);
-}
-`;
-
-const FRAG = `
-precision highp float;
-varying float vSeed;
-varying float vAlpha;
-varying float vBoost;
-varying float vFlare;
-void main() {
-  vec2 c = gl_PointCoord - 0.5;
-  float d = length(c);
-  if (d > 0.5) discard;
-  // Mostly dinoflagellate cyan-blue, some green (site accent), rare warm gold.
-  vec3 blue  = vec3(0.30, 0.75, 0.98);
-  vec3 green = vec3(0.48, 1.0, 0.69);  // #7BFFB1
-  vec3 warm  = vec3(0.96, 0.82, 0.48); // #F4D27A
-  float pick = fract(vSeed * 7.0);
-  vec3 col = pick < 0.55 ? blue : (pick < 0.88 ? green : warm);
-  // Flaring motes whiten toward pale cyan.
-  col = mix(col, vec3(0.78, 0.95, 1.0), vFlare * 0.8);
-  // Agitated water makes plankton surge electric blue.
-  col = mix(col, vec3(0.18, 0.42, 1.0), clamp(vBoost * 0.9, 0.0, 0.9));
-  float a = pow(1.0 - d * 2.0, 1.9) * vAlpha * (1.0 + vBoost * 1.6 + vFlare * 2.2);
-  gl_FragColor = vec4(col, a);
-}
-`;
-
 /**
- * Bioluminescent plankton in water that actually moves. Particles ride a
- * coarse velocity field; the cursor stirs it, clicks splash it, scrolling
- * streams it past, fish wakes push it — and motes flash electric blue in
- * proportion to how hard the water around them is being agitated, the way
- * real dinoflagellates fire under shear.
+ * Bioluminescent water as an actual fluid. A WebGL2 stable-fluids solver
+ * (velocity + pressure projection) advects a glowing dye field: the cursor
+ * stirs real currents, clicks splash, scrolling pulls the column, fish
+ * wakes glow — and because the light is a continuous medium rather than
+ * particles, agitation makes it swirl and bloom like the long-exposure
+ * dinoflagellate photos, never tearing holes in the field.
  */
+
+const QUAD_VERT = `
+attribute vec2 a;
+varying vec2 vUv;
+void main() {
+  vUv = a * 0.5 + 0.5;
+  gl_Position = vec4(a, 0.0, 1.0);
+}
+`;
+
+const ADVECT_FRAG = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVel;
+uniform sampler2D uSrc;
+uniform float uDt;
+uniform float uDissipation;
+void main() {
+  vec2 coord = vUv - uDt * texture2D(uVel, vUv).xy;
+  gl_FragColor = uDissipation * texture2D(uSrc, coord);
+}
+`;
+
+const SPLAT_FRAG = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTarget;
+uniform vec2 uPoint;
+uniform vec3 uValue;
+uniform float uRadius;
+uniform float uAspect;
+void main() {
+  vec2 d = vUv - uPoint;
+  d.x *= uAspect;
+  float g = exp(-dot(d, d) / uRadius);
+  gl_FragColor = vec4(texture2D(uTarget, vUv).xyz + uValue * g, 1.0);
+}
+`;
+
+const DIVERGENCE_FRAG = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVel;
+uniform vec2 uTexel;
+void main() {
+  float l = texture2D(uVel, vUv - vec2(uTexel.x, 0.0)).x;
+  float r = texture2D(uVel, vUv + vec2(uTexel.x, 0.0)).x;
+  float b = texture2D(uVel, vUv - vec2(0.0, uTexel.y)).y;
+  float t = texture2D(uVel, vUv + vec2(0.0, uTexel.y)).y;
+  gl_FragColor = vec4(0.5 * (r - l + t - b), 0.0, 0.0, 1.0);
+}
+`;
+
+const PRESSURE_FRAG = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uDivergence;
+uniform vec2 uTexel;
+void main() {
+  float l = texture2D(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+  float r = texture2D(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+  float b = texture2D(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+  float t = texture2D(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+  float div = texture2D(uDivergence, vUv).x;
+  gl_FragColor = vec4((l + r + b + t - div) * 0.25, 0.0, 0.0, 1.0);
+}
+`;
+
+const GRADIENT_FRAG = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uVel;
+uniform vec2 uTexel;
+void main() {
+  float l = texture2D(uPressure, vUv - vec2(uTexel.x, 0.0)).x;
+  float r = texture2D(uPressure, vUv + vec2(uTexel.x, 0.0)).x;
+  float b = texture2D(uPressure, vUv - vec2(0.0, uTexel.y)).x;
+  float t = texture2D(uPressure, vUv + vec2(0.0, uTexel.y)).x;
+  vec2 vel = texture2D(uVel, vUv).xy - 0.5 * vec2(r - l, t - b);
+  gl_FragColor = vec4(vel, 0.0, 1.0);
+}
+`;
+
+const DISPLAY_FRAG = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uDye;
+uniform float uTime;
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+void main() {
+  float d = texture2D(uDye, vUv).x;
+  // Long-exposure dinoflagellate ramp: deep ocean blue blooming through
+  // electric blue into pale foam-cyan where the water is most agitated.
+  vec3 deep = vec3(0.02, 0.09, 0.28);
+  vec3 electric = vec3(0.10, 0.42, 1.00);
+  vec3 foam = vec3(0.62, 0.92, 1.00);
+  vec3 col = deep * smoothstep(0.0, 0.22, d);
+  col = mix(col, electric, smoothstep(0.18, 0.85, d));
+  col = mix(col, foam, smoothstep(0.8, 1.7, d));
+  // Granular sparkle inside the glow — the sand-glitter from the shore shots.
+  float tw = hash(floor(vUv * vec2(720.0, 420.0)) + floor(uTime * 2.5));
+  col += step(0.992, tw) * smoothstep(0.06, 0.5, d) * vec3(0.7, 0.92, 1.0);
+  float a = clamp(d * 1.5, 0.0, 0.92);
+  gl_FragColor = vec4(col * a, a);
+}
+`;
+
+interface DoubleFBO {
+  read: { tex: WebGLTexture; fbo: WebGLFramebuffer };
+  write: { tex: WebGLTexture; fbo: WebGLFramebuffer };
+  swap: () => void;
+  w: number;
+  h: number;
+  texel: [number, number];
+}
+
 export default function Bioluminescence({ intensity = 1 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const full = useFullExperience();
@@ -88,8 +141,9 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
     if (!full) return;
     const canvas = ref.current;
     if (!canvas) return;
-    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true });
     if (!gl) return;
+    if (!gl.getExtension('EXT_color_buffer_float')) return;
 
     function compile(type: number, src: string) {
       const s = gl!.createShader(type)!;
@@ -98,142 +152,114 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
       if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) console.error(gl!.getShaderInfoLog(s));
       return s;
     }
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
+    const vert = compile(gl.VERTEX_SHADER, QUAD_VERT);
+    function program(fragSrc: string) {
+      const p = gl!.createProgram()!;
+      gl!.attachShader(p, vert);
+      gl!.attachShader(p, compile(gl!.FRAGMENT_SHADER, fragSrc));
+      gl!.bindAttribLocation(p, 0, 'a');
+      gl!.linkProgram(p);
+      const uniforms: Record<string, WebGLUniformLocation> = {};
+      const n = gl!.getProgramParameter(p, gl!.ACTIVE_UNIFORMS);
+      for (let i = 0; i < n; i++) {
+        const name = gl!.getActiveUniform(p, i)!.name;
+        uniforms[name] = gl!.getUniformLocation(p, name)!;
+      }
+      return { p, u: uniforms };
+    }
+    const advect = program(ADVECT_FRAG);
+    const splat = program(SPLAT_FRAG);
+    const divergence = program(DIVERGENCE_FRAG);
+    const pressure = program(PRESSURE_FRAG);
+    const gradient = program(GRADIENT_FRAG);
+    const display = program(DISPLAY_FRAG);
 
+    const quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.disable(gl.BLEND);
+
+    function makeFBO(w: number, h: number, internal: number, format: number) {
+      const tex = gl!.createTexture()!;
+      gl!.bindTexture(gl!.TEXTURE_2D, tex);
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MIN_FILTER, gl!.LINEAR);
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR);
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE);
+      gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE);
+      gl!.texImage2D(gl!.TEXTURE_2D, 0, internal, w, h, 0, format, gl!.HALF_FLOAT, null);
+      const fbo = gl!.createFramebuffer()!;
+      gl!.bindFramebuffer(gl!.FRAMEBUFFER, fbo);
+      gl!.framebufferTexture2D(gl!.FRAMEBUFFER, gl!.COLOR_ATTACHMENT0, gl!.TEXTURE_2D, tex, 0);
+      gl!.clearColor(0, 0, 0, 0);
+      gl!.clear(gl!.COLOR_BUFFER_BIT);
+      return { tex, fbo };
+    }
+    function makeDouble(w: number, h: number, internal: number, format: number): DoubleFBO {
+      const d = {
+        read: makeFBO(w, h, internal, format),
+        write: makeFBO(w, h, internal, format),
+        swap() { const t = d.read; d.read = d.write; d.write = t; },
+        w, h,
+        texel: [1 / w, 1 / h] as [number, number],
+      };
+      return d;
+    }
+
+    const SIM_W = 144;
     const isMobile = window.innerWidth < 768;
-    const COUNT = Math.round((isMobile ? 280 : 1100) * intensity);
+    const DYE_W = isMobile ? 360 : 560;
+    let aspect = 1;
+    let vel!: DoubleFBO;
+    let dye!: DoubleFBO;
+    let prs!: DoubleFBO;
+    let div!: { tex: WebGLTexture; fbo: WebGLFramebuffer };
+    let simH = 80;
+    let dyeH = 300;
 
-    // Particle state lives on the CPU now — positions advect through the
-    // flow field each frame and re-upload (a 1100-particle copy is cheap).
-    let VW = window.innerWidth;   // particle space extents (CSS px)
-    let VH = window.innerHeight;
-    const pos    = new Float32Array(COUNT * 2);
-    const seeds  = new Float32Array(COUNT);
-    const zs     = new Float32Array(COUNT);
-    const boosts = new Float32Array(COUNT);
-    const drift  = new Float32Array(COUNT);  // upward base speed px/s
-    for (let i = 0; i < COUNT; i++) {
-      pos[i * 2 + 0] = (Math.random() - 0.5) * VW;
-      pos[i * 2 + 1] = (Math.random() - 0.5) * VH;
-      seeds[i] = Math.random();
-      zs[i] = 0.35 + Math.pow(Math.random(), 1.4) * 0.65;
-      drift[i] = 5 + Math.random() * 9;
+    function allocate() {
+      const rectNow = canvas!.getBoundingClientRect();
+      aspect = rectNow.width / Math.max(rectNow.height, 1);
+      simH = Math.max(48, Math.round(SIM_W / aspect));
+      dyeH = Math.max(160, Math.round(DYE_W / aspect));
+      vel = makeDouble(SIM_W, simH, gl!.RG16F, gl!.RG);
+      dye = makeDouble(DYE_W, dyeH, gl!.R16F, gl!.RED);
+      prs = makeDouble(SIM_W, simH, gl!.R16F, gl!.RED);
+      div = makeFBO(SIM_W, simH, gl!.R16F, gl!.RED);
     }
-
-    function makeBuffer(data: Float32Array, attr: string, size: number, dynamic = false) {
-      const buf = gl!.createBuffer();
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, buf);
-      gl!.bufferData(gl!.ARRAY_BUFFER, data, dynamic ? gl!.DYNAMIC_DRAW : gl!.STATIC_DRAW);
-      const loc = gl!.getAttribLocation(prog, attr);
-      gl!.enableVertexAttribArray(loc);
-      gl!.vertexAttribPointer(loc, size, gl!.FLOAT, false, 0, 0);
-      return buf;
-    }
-    const posBuf = makeBuffer(pos, 'position', 2, true);
-    makeBuffer(seeds, 'aSeed', 1);
-    makeBuffer(zs, 'aZ', 1);
-    const boostBuf = makeBuffer(boosts, 'aBoost', 1, true);
-
-    const uTime = gl.getUniformLocation(prog, 'uTime');
-    const uRes  = gl.getUniformLocation(prog, 'uRes');
-    const uView = gl.getUniformLocation(prog, 'uViewport');
-    const uInt  = gl.getUniformLocation(prog, 'uIntensity');
-    const uPar  = gl.getUniformLocation(prog, 'uParallax');
-
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      VW = window.innerWidth;
-      VH = window.innerHeight;
-      canvas!.width = VW * dpr;
-      canvas!.height = VH * dpr;
-      gl!.viewport(0, 0, canvas!.width, canvas!.height);
+      const r = canvas!.getBoundingClientRect();
+      canvas!.width = Math.max(2, Math.round(r.width * dpr));
+      canvas!.height = Math.max(2, Math.round(r.height * dpr));
     }
     resize();
+    allocate();
     window.addEventListener('resize', resize);
 
-    // ---- Velocity field ----
-    const fvx = new Float32Array(GW * GH);
-    const fvy = new Float32Array(GW * GH);
-    const tmpx = new Float32Array(GW * GH);
-    const tmpy = new Float32Array(GW * GH);
-
-    /** Splat a velocity impulse into the field. Particle-space coords (+y up). */
-    function splat(px: number, py: number, vx: number, vy: number, radius: number) {
-      // Map particle space (origin center) to grid indices.
-      const gx = ((px + VW / 2) / VW) * GW;
-      const gy = ((py + VH / 2) / VH) * GH;
-      const gr = Math.max(1.5, (radius / VW) * GW);
-      const x0 = Math.max(0, Math.floor(gx - gr * 2));
-      const x1 = Math.min(GW - 1, Math.ceil(gx + gr * 2));
-      const y0 = Math.max(0, Math.floor(gy - gr * 2));
-      const y1 = Math.min(GH - 1, Math.ceil(gy + gr * 2));
-      for (let yy = y0; yy <= y1; yy++) {
-        for (let xx = x0; xx <= x1; xx++) {
-          const dx = xx - gx;
-          const dy = yy - gy;
-          const w = Math.exp(-(dx * dx + dy * dy) / (gr * gr));
-          const idx = yy * GW + xx;
-          fvx[idx] += vx * w;
-          fvy[idx] += vy * w;
-        }
-      }
+    function blit(target: { fbo: WebGLFramebuffer } | null, w: number, h: number) {
+      gl!.bindFramebuffer(gl!.FRAMEBUFFER, target ? target.fbo : null);
+      gl!.viewport(0, 0, w, h);
+      gl!.drawArrays(gl!.TRIANGLES, 0, 6);
+    }
+    function bindTex(unit: number, tex: WebGLTexture) {
+      gl!.activeTexture(gl!.TEXTURE0 + unit);
+      gl!.bindTexture(gl!.TEXTURE_2D, tex);
     }
 
-    /** Bilinear sample of the field at a particle-space point. */
-    function sample(px: number, py: number, out: { x: number; y: number }) {
-      const gx = Math.min(GW - 1.001, Math.max(0, ((px + VW / 2) / VW) * GW - 0.5));
-      const gy = Math.min(GH - 1.001, Math.max(0, ((py + VH / 2) / VH) * GH - 0.5));
-      const x0 = Math.floor(gx);
-      const y0 = Math.floor(gy);
-      const fx = gx - x0;
-      const fy = gy - y0;
-      const i00 = y0 * GW + x0;
-      const i10 = i00 + 1;
-      const i01 = i00 + GW;
-      const i11 = i01 + 1;
-      out.x = (fvx[i00] * (1 - fx) + fvx[i10] * fx) * (1 - fy) + (fvx[i01] * (1 - fx) + fvx[i11] * fx) * fy;
-      out.y = (fvy[i00] * (1 - fx) + fvy[i10] * fx) * (1 - fy) + (fvy[i01] * (1 - fx) + fvy[i11] * fx) * fy;
+    // ---- Force queue (uv space, y up) ----
+    interface Force { x: number; y: number; vx: number; vy: number; dye: number; radius: number }
+    const forces: Force[] = [];
+    function pushForce(f: Force) {
+      if (forces.length < 14) forces.push(f);
     }
 
-    function stepField(dt: number) {
-      const decay = Math.exp(-dt * 1.7);
-      // One neighbor-mix pass spreads momentum outward — a poor man's
-      // diffusion that makes pushes bloom like swirls instead of staying
-      // as hard-edged stamps.
-      for (let y = 0; y < GH; y++) {
-        for (let x = 0; x < GW; x++) {
-          const i = y * GW + x;
-          const xm = x > 0 ? i - 1 : i;
-          const xp = x < GW - 1 ? i + 1 : i;
-          const ym = y > 0 ? i - GW : i;
-          const yp = y < GH - 1 ? i + GW : i;
-          tmpx[i] = (fvx[i] * 0.72 + (fvx[xm] + fvx[xp] + fvx[ym] + fvx[yp]) * 0.07) * decay;
-          tmpy[i] = (fvy[i] * 0.72 + (fvy[xm] + fvy[xp] + fvy[ym] + fvy[yp]) * 0.07) * decay;
-        }
-      }
-      fvx.set(tmpx);
-      fvy.set(tmpy);
-    }
-
-    // ---- Stirring: cursor, click splash, scroll stream, fish wakes ----
-    /** Convert a client-space point to particle space. The buffer is
-     * viewport-sized but CSS-stretched over the whole section, so we map
-     * through normalized section coordinates — this keeps cursor position
-     * and displayed plankton aligned at any scroll depth in the zone. */
     let rect = canvas.getBoundingClientRect();
-    function toParticle(cx: number, cy: number): { x: number; y: number } | null {
-      if (cy < rect.top - 100 || cy > rect.bottom + 100) return null;
-      return {
-        x: ((cx - rect.left) / rect.width - 0.5) * VW,
-        y: -((cy - rect.top) / rect.height - 0.5) * VH,
-      };
+    function toUv(cx: number, cy: number): { x: number; y: number } | null {
+      if (cy < rect.top - 80 || cy > rect.bottom + 80) return null;
+      return { x: (cx - rect.left) / rect.width, y: 1 - (cy - rect.top) / rect.height };
     }
 
     let lastMx = 0;
@@ -241,51 +267,60 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
     let lastMt = 0;
     function onMove(e: PointerEvent) {
       rect = canvas!.getBoundingClientRect();
-      const p = toParticle(e.clientX, e.clientY);
+      const p = toUv(e.clientX, e.clientY);
       const now = performance.now();
       if (p && lastMt) {
-        const dt = Math.min((now - lastMt) / 1000, 0.1);
-        if (dt > 0.001) {
-          const vx = (e.clientX - lastMx) / dt;
-          const vy = -((e.clientY - lastMy) / dt);
+        const dtm = Math.min((now - lastMt) / 1000, 0.1);
+        if (dtm > 0.001) {
+          let vx = (e.clientX - lastMx) / rect.width / dtm;
+          let vy = -((e.clientY - lastMy) / rect.height) / dtm;
           const speed = Math.hypot(vx, vy);
-          if (speed > 1) {
-            const clamped = Math.min(speed, 1400) / speed;
-            splat(p.x, p.y, vx * clamped * 0.35, vy * clamped * 0.35, 60 + Math.min(speed, 1400) * 0.04);
+          if (speed > 0.02) {
+            // Water is heavy: cap how hard a flick can shove it, so glow
+            // billows around the stroke instead of rocketing offscreen.
+            const k = Math.min(speed, 0.85) / speed;
+            vx *= k; vy *= k;
+            pushForce({
+              x: p.x, y: p.y, vx: vx * 0.5, vy: vy * 0.5,
+              dye: Math.min(0.05 + speed * 0.30, 0.42) * intensity,
+              radius: 0.0024,
+            });
           }
         }
       }
-      lastMx = e.clientX;
-      lastMy = e.clientY;
-      lastMt = now;
+      lastMx = e.clientX; lastMy = e.clientY; lastMt = now;
     }
     function onDown(e: PointerEvent) {
       rect = canvas!.getBoundingClientRect();
-      const p = toParticle(e.clientX, e.clientY);
+      const p = toUv(e.clientX, e.clientY);
       if (!p) return;
-      // Radial splash — water shoved outward from the impact point.
-      for (let k = 0; k < 10; k++) {
-        const ang = (k / 10) * Math.PI * 2;
-        splat(p.x + Math.cos(ang) * 26, p.y + Math.sin(ang) * 26,
-              Math.cos(ang) * 520, Math.sin(ang) * 520, 46);
+      // Bright bloom at the impact point, with a gentler outward shove —
+      // a splash that glows where you touched, not a ring that thins out.
+      pushForce({ x: p.x, y: p.y, vx: 0, vy: 0, dye: 0.55 * intensity, radius: 0.004 });
+      for (let k = 0; k < 8; k++) {
+        const ang = (k / 8) * Math.PI * 2;
+        pushForce({
+          x: p.x + Math.cos(ang) * 0.02, y: p.y + Math.sin(ang) * 0.02,
+          vx: Math.cos(ang) * 0.32, vy: Math.sin(ang) * 0.32,
+          dye: 0.16 * intensity, radius: 0.003,
+        });
       }
     }
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerdown', onDown, { passive: true });
 
-    // Scrolling streams the whole water column past you.
     let lastScrollY = window.scrollY;
-    let scrollBias = 0;
     function onScroll() {
       const dy = window.scrollY - lastScrollY;
       lastScrollY = window.scrollY;
-      // Scroll down -> water streams upward past the viewer.
-      scrollBias += dy * 1.6;
-      scrollBias = Math.max(-900, Math.min(900, scrollBias));
+      const vy = Math.max(-1.4, Math.min(1.4, dy * 0.004));
+      if (Math.abs(vy) < 0.04) return;
+      for (const x of [0.25, 0.5, 0.75]) {
+        pushForce({ x, y: 0.5, vx: 0, vy, dye: 0.012 * intensity, radius: 0.06 });
+      }
     }
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    // Fish and whale wakes arrive through the shared impulse bus.
     const drain = createImpulseDrain();
 
     let visible = true;
@@ -295,84 +330,116 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
     );
     io.observe(canvas);
 
-    const start = performance.now();
-    const flow = { x: 0, y: 0 };
-    let parX = 0;
-    let parY = 0;
-    let parTx = 0;
-    let parTy = 0;
-    function onPar(e: PointerEvent) {
-      parTx = (e.clientX / window.innerWidth) * 2 - 1;
-      parTy = -((e.clientY / window.innerHeight) * 2 - 1);
+    // Ambient currents: two glow-fronts wandering like surge on a beach,
+    // so the water breathes even before anyone touches it.
+    function ambient(t: number) {
+      for (let i = 0; i < 2; i++) {
+        const ph = i * 2.6;
+        const x = 0.5 + 0.40 * Math.sin(t * 0.071 + ph) * Math.cos(t * 0.043 + ph * 1.7);
+        const y = 0.5 + 0.36 * Math.sin(t * 0.053 + ph * 1.3);
+        const vx = Math.cos(t * 0.071 + ph) * 0.22;
+        const vy = Math.cos(t * 0.053 + ph * 1.3) * 0.18;
+        pushForce({ x, y, vx, vy, dye: 0.032 * intensity, radius: 0.02 });
+      }
     }
-    window.addEventListener('pointermove', onPar, { passive: true });
 
-    let raf = 0;
+    const start = performance.now();
     let lastFrame = performance.now();
+    let raf = 0;
     function frame(now: number) {
       raf = requestAnimationFrame(frame);
-      const dt = Math.min((now - lastFrame) / 1000, 0.05);
+      const dt = Math.min((now - lastFrame) / 1000, 0.033);
       lastFrame = now;
-      if (!visible) {
-        // Keep the bus drained so impulses don't pile up while offscreen.
-        drain.drain();
-        scrollBias = 0;
-        return;
-      }
+      if (!visible) { drain.drain(); forces.length = 0; return; }
       const t = (now - start) / 1000;
 
-      // Fold external wakes into the field.
       rect = canvas!.getBoundingClientRect();
       for (const imp of drain.drain()) {
-        const p = toParticle(imp.cx, imp.cy);
-        if (p) splat(p.x, p.y, imp.vx * imp.strength, -imp.vy * imp.strength, imp.radius);
+        const p = toUv(imp.cx, imp.cy);
+        if (!p) continue;
+        pushForce({
+          x: p.x, y: p.y,
+          vx: (imp.vx / rect.width) * imp.strength * 1.6,
+          vy: (-imp.vy / rect.height) * imp.strength * 1.6,
+          dye: 0.10 * imp.strength * intensity,
+          radius: Math.pow(imp.radius / rect.height, 2) * 2.5 + 0.001,
+        });
+      }
+      ambient(t);
+
+      // -- Inject forces (velocity + dye splats, ping-pong) --
+      gl!.useProgram(splat.p);
+      for (const f of forces) {
+        gl!.uniform1f(splat.u.uAspect, aspect);
+        gl!.uniform2f(splat.u.uPoint, f.x, f.y);
+        gl!.uniform1f(splat.u.uRadius, f.radius);
+        bindTex(0, vel.read.tex);
+        gl!.uniform1i(splat.u.uTarget, 0);
+        gl!.uniform3f(splat.u.uValue, f.vx, f.vy, 0);
+        blit(vel.write, vel.w, vel.h);
+        vel.swap();
+        if (f.dye > 0) {
+          bindTex(0, dye.read.tex);
+          gl!.uniform3f(splat.u.uValue, f.dye, 0, 0);
+          blit(dye.write, dye.w, dye.h);
+          dye.swap();
+        }
+      }
+      forces.length = 0;
+
+      // -- Pressure projection (keeps the motion swirling, not smearing) --
+      gl!.useProgram(divergence.p);
+      gl!.uniform2f(divergence.u.uTexel, vel.texel[0], vel.texel[1]);
+      bindTex(0, vel.read.tex);
+      gl!.uniform1i(divergence.u.uVel, 0);
+      blit(div, SIM_W, simH);
+
+      gl!.useProgram(pressure.p);
+      gl!.uniform2f(pressure.u.uTexel, vel.texel[0], vel.texel[1]);
+      bindTex(1, div.tex);
+      gl!.uniform1i(pressure.u.uDivergence, 1);
+      for (let i = 0; i < 14; i++) {
+        bindTex(0, prs.read.tex);
+        gl!.uniform1i(pressure.u.uPressure, 0);
+        blit(prs.write, SIM_W, simH);
+        prs.swap();
       }
 
-      stepField(dt);
-      scrollBias *= Math.exp(-dt * 2.4);
+      gl!.useProgram(gradient.p);
+      gl!.uniform2f(gradient.u.uTexel, vel.texel[0], vel.texel[1]);
+      bindTex(0, prs.read.tex);
+      bindTex(1, vel.read.tex);
+      gl!.uniform1i(gradient.u.uPressure, 0);
+      gl!.uniform1i(gradient.u.uVel, 1);
+      blit(vel.write, vel.w, vel.h);
+      vel.swap();
 
-      // Advect particles, light them by local water speed.
-      for (let i = 0; i < COUNT; i++) {
-        const z = zs[i];
-        let px = pos[i * 2 + 0];
-        let py = pos[i * 2 + 1];
-        sample(px, py, flow);
-        const fxv = flow.x * z;
-        const fyv = (flow.y + scrollBias) * z;
-        px += (Math.sin(t * 0.6 + seeds[i] * 6.28) * 6 + fxv) * dt;
-        py += (drift[i] + fyv) * dt;
+      // -- Advect velocity, then dye --
+      gl!.useProgram(advect.p);
+      gl!.uniform1f(advect.u.uDt, dt);
+      bindTex(0, vel.read.tex);
+      gl!.uniform1i(advect.u.uVel, 0);
+      gl!.uniform1i(advect.u.uSrc, 0);
+      // Currents die down quickly — heavy water, not a gas sim.
+      gl!.uniform1f(advect.u.uDissipation, 0.985);
+      blit(vel.write, vel.w, vel.h);
+      vel.swap();
 
-        // Wrap with margin so re-entry isn't visible.
-        const mx = VW / 2 + 30;
-        const my = VH / 2 + 30;
-        if (px > mx) px -= VW + 60; else if (px < -mx) px += VW + 60;
-        if (py > my) py -= VH + 60; else if (py < -my) py += VH + 60;
-        pos[i * 2 + 0] = px;
-        pos[i * 2 + 1] = py;
+      bindTex(0, vel.read.tex);
+      bindTex(1, dye.read.tex);
+      gl!.uniform1i(advect.u.uVel, 0);
+      gl!.uniform1i(advect.u.uSrc, 1);
+      // Glow fades like agitated dinoflagellates settling back to dark.
+      gl!.uniform1f(advect.u.uDissipation, 0.988);
+      blit(dye.write, dye.w, dye.h);
+      dye.swap();
 
-        // Shear-triggered glow: rises fast with water speed, fades slow.
-        const speed = Math.hypot(fxv, fyv - scrollBias * z * 0.85);
-        const target = Math.min(speed / 230, 1);
-        boosts[i] += (target > boosts[i] ? 0.5 : 0.045) * (target - boosts[i]);
-      }
-
-      // Eased pointer parallax.
-      parX += (parTx - parX) * 0.05;
-      parY += (parTy - parY) * 0.05;
-
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, posBuf);
-      gl!.bufferSubData(gl!.ARRAY_BUFFER, 0, pos);
-      gl!.bindBuffer(gl!.ARRAY_BUFFER, boostBuf);
-      gl!.bufferSubData(gl!.ARRAY_BUFFER, 0, boosts);
-
-      gl!.clearColor(0, 0, 0, 0);
-      gl!.clear(gl!.COLOR_BUFFER_BIT);
-      gl!.uniform1f(uTime, t);
-      gl!.uniform2f(uRes, canvas!.width, canvas!.height);
-      gl!.uniform2f(uView, VW, VH);
-      gl!.uniform1f(uInt, intensity);
-      gl!.uniform2f(uPar, parX, parY);
-      gl!.drawArrays(gl!.POINTS, 0, COUNT);
+      // -- Composite to screen --
+      gl!.useProgram(display.p);
+      bindTex(0, dye.read.tex);
+      gl!.uniform1i(display.u.uDye, 0);
+      gl!.uniform1f(display.u.uTime, t);
+      blit(null, canvas!.width, canvas!.height);
     }
     raf = requestAnimationFrame(frame);
 
@@ -382,7 +449,6 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
       drain.dispose();
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointermove', onPar);
       window.removeEventListener('pointerdown', onDown);
       window.removeEventListener('scroll', onScroll);
     };

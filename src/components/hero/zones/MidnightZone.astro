@@ -1,6 +1,5 @@
 ---
 import RevealOnScroll from '../../fx/RevealOnScroll.tsx';
-import Bioluminescence from '../../motion/Bioluminescence.client.tsx';
 import AmbientFish from '../../motion/AmbientFish.client.tsx';
 
 interface Post {
@@ -21,9 +20,6 @@ const { posts = [] } = Astro.props as Props;
   id="zone-midnight"
   style="--d-fg: #D6DCE5; --d-fg-muted: #9CAABD; --d-accent: #7BFFB1; --d-accent-2: #F4D27A; --d-rule: rgba(214, 220, 229, 0.10); color: var(--d-fg); background: linear-gradient(180deg, #1F3F5C 0%, #102538 50%, #06121F 100%);"
 >
-  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-    <Bioluminescence client:visible intensity={0.4} />
-  </div>
   <div class="absolute left-0 right-0 pointer-events-none" style="top: 6%; height: min(130vh, 90%);" data-depth="0.12" aria-hidden="true">
     <AmbientFish client:visible variant="lantern" spawnEvery={18} giant />
   </div>
