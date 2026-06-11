@@ -69,13 +69,31 @@ void main() {
   float sparkleN = fbm(waveUv * 3.6, uTime * 1.8);
   float sparkle  = smoothstep(0.66, 0.86, sparkleN) * sunBand * 1.7;
 
+  // Micro-glints across the whole surface: faint everywhere, stronger near
+  // the sun path. Real water glitters well outside the specular column.
+  float glintN = fbm(waveUv * 5.2 + 31.0, uTime * 2.4);
+  float glint  = smoothstep(0.80, 0.93, glintN) * (0.10 + 0.55 * sunBand);
+
+  // Slow rolling swell: broad bands of light travelling toward the viewer.
+  float swell = sin((1.0 - uv.y) * 13.0 - uTime * 0.85 + h * 2.2);
+  float swellShade = swell * 0.040 * (0.35 + 0.65 * persp);
+
+  // Cloud reflections: broad pale patches mirrored on the far water.
+  float reflN = fbm(vec2(uv.x * 1.7 + 7.0, (1.0 - uv.y) * 2.4), uTime * 0.22);
+  float refl  = smoothstep(0.52, 0.78, reflN) * smoothstep(0.35, 0.95, uv.y) * 0.12;
+
   // Texture relaxes near the bottom edge so the animated band dissolves
   // into the twilight section's flat gradient with no visible cutoff.
   float seamFade = smoothstep(0.0, 0.22, uv.y);
   waveBright *= seamFade;
   sparkle    *= seamFade;
+  glint      *= seamFade;
+  swellShade *= seamFade;
 
-  vec3 col = base + waveBright + sunBand * 0.40 + sparkle * vec3(1.0, 0.96, 0.82);
+  vec3 col = base + waveBright + swellShade + sunBand * 0.40
+           + sparkle * vec3(1.0, 0.96, 0.82)
+           + glint   * vec3(0.95, 0.97, 1.0)
+           + refl    * vec3(0.92, 0.97, 1.0);
 
   // Atmospheric fog: the waterline melts into the sky haze instead of
   // meeting it at a razor edge.

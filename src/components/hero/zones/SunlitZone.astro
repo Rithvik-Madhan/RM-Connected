@@ -1,6 +1,7 @@
 ---
 import CursorFish from '../CursorFish.tsx';
 import OceanSurface from '../../motion/OceanSurface.client.tsx';
+import HeroParallax from '../../motion/HeroParallax.client.tsx';
 ---
 <section
   class="pin-zone overflow-hidden relative"
@@ -9,42 +10,49 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
   style="background: linear-gradient(180deg, var(--d-bg) 0%, var(--d-bg-2) 100%);"
 >
   <CursorFish client:load />
+  <HeroParallax client:idle />
 
   <div class="sky-scene" aria-hidden="true">
     <div class="sky-grad"></div>
-    <div class="sun-glow"></div>
-    <div class="cloud-layer cloud-puffy">
-      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
-        <defs>
-          <filter id="cloud-puffy-fx" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
-            <feTurbulence type="fractalNoise" baseFrequency="0.0036 0.0068" numOctaves="4" seed="13" stitchTiles="stitch"/>
-            <feColorMatrix values="0 0 0 0 1
-                                   0 0 0 0 1
-                                   0 0 0 0 1
-                                   0 0 0 3.4 -1.7"/>
-            <feGaussianBlur stdDeviation="3.2"/>
-          </filter>
-        </defs>
-        <rect width="100%" height="100%" filter="url(#cloud-puffy-fx)"/>
-      </svg>
+    <div class="plx-wrap" data-plx="7">
+      <div class="sun-glow"></div>
     </div>
-    <div class="cloud-layer cloud-wisp">
-      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
-        <defs>
-          <filter id="cloud-wisp-fx" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves="2" seed="5" stitchTiles="stitch"/>
-            <feColorMatrix values="0 0 0 0 1
-                                   0 0 0 0 1
-                                   0 0 0 0 1
-                                   0 0 0 1.6 -0.95"/>
-            <feGaussianBlur stdDeviation="1.5"/>
-          </filter>
-        </defs>
-        <rect width="100%" height="100%" filter="url(#cloud-wisp-fx)"/>
-      </svg>
+    <div class="plx-wrap" data-plx="14">
+      <div class="cloud-layer cloud-puffy">
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
+          <defs>
+            <filter id="cloud-puffy-fx" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.0036 0.0068" numOctaves="4" seed="13" stitchTiles="stitch"/>
+              <feColorMatrix values="0 0 0 0 1
+                                     0 0 0 0 1
+                                     0 0 0 0 1
+                                     0 0 0 3.4 -1.7"/>
+              <feGaussianBlur stdDeviation="3.2"/>
+            </filter>
+          </defs>
+          <rect width="100%" height="100%" filter="url(#cloud-puffy-fx)"/>
+        </svg>
+      </div>
     </div>
-    <div class="horizon-haze"></div>
-    <div class="ocean-surface">
+    <div class="plx-wrap" data-plx="26">
+      <div class="cloud-layer cloud-wisp">
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
+          <defs>
+            <filter id="cloud-wisp-fx" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves="2" seed="5" stitchTiles="stitch"/>
+              <feColorMatrix values="0 0 0 0 1
+                                     0 0 0 0 1
+                                     0 0 0 0 1
+                                     0 0 0 1.6 -0.95"/>
+              <feGaussianBlur stdDeviation="1.5"/>
+            </filter>
+          </defs>
+          <rect width="100%" height="100%" filter="url(#cloud-wisp-fx)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="horizon-haze" data-plx="9"></div>
+    <div class="ocean-surface" data-plx="11">
       <!-- Static fallback gradient — visible when reduced-motion / low-power -->
       <div class="ocean-base"></div>
       <!-- Animated WebGL water -->
@@ -55,7 +63,10 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
     </div>
   </div>
 
-  <div class="relative z-10 container mx-auto px-6 min-h-screen flex flex-col items-center justify-start pt-[11vh] sm:pt-[10vh]">
+  <div
+    class="relative z-10 container mx-auto px-6 min-h-screen flex flex-col items-center justify-start pt-[11vh] sm:pt-[10vh]"
+    data-plx="-13"
+  >
     <p class="meta mb-6 opacity-75">Field notes from above and below the surface</p>
 
     <h1
@@ -141,16 +152,27 @@ import OceanSurface from '../../motion/OceanSurface.client.tsx';
     );
   }
 
-  /* The ocean now owns the lower half of the hero instead of feeling like a thin stripe. */
+  /* Parallax wrappers carry the pointer-depth transform so the layers
+     inside keep their own CSS animations (cloud drift, etc.). */
+  .plx-wrap {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+  }
+
+  /* The ocean now owns the lower half of the hero instead of feeling like a
+     thin stripe. Oversized on three sides so pointer parallax never exposes
+     a seam at the edges. */
   .ocean-surface {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 37%;
+    left: -16px;
+    right: -16px;
+    bottom: -16px;
+    height: calc(37% + 16px);
     overflow: hidden;
     z-index: 2;
     background: #4a87b0;
+    will-change: transform;
   }
   .ocean-base {
     position: absolute;
