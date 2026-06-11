@@ -276,13 +276,14 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
           let vy = -((e.clientY - lastMy) / rect.height) / dtm;
           const speed = Math.hypot(vx, vy);
           if (speed > 0.02) {
-            // Water is heavy: cap how hard a flick can shove it, so glow
-            // billows around the stroke instead of rocketing offscreen.
-            const k = Math.min(speed, 0.85) / speed;
+            // The cursor is a quiet visitor, not the main event: a faint
+            // trace that proves the water is alive, well below the ambient
+            // currents in brightness and push.
+            const k = Math.min(speed, 0.5) / speed;
             vx *= k; vy *= k;
             pushForce({
-              x: p.x, y: p.y, vx: vx * 0.5, vy: vy * 0.5,
-              dye: Math.min(0.05 + speed * 0.30, 0.42) * intensity,
+              x: p.x, y: p.y, vx: vx * 0.22, vy: vy * 0.22,
+              dye: Math.min(0.02 + speed * 0.10, 0.13) * intensity,
               radius: 0.0024,
             });
           }
@@ -294,15 +295,15 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
       rect = canvas!.getBoundingClientRect();
       const p = toUv(e.clientX, e.clientY);
       if (!p) return;
-      // Bright bloom at the impact point, with a gentler outward shove —
-      // a splash that glows where you touched, not a ring that thins out.
-      pushForce({ x: p.x, y: p.y, vx: 0, vy: 0, dye: 0.55 * intensity, radius: 0.004 });
+      // Soft bloom at the impact point with a mild outward push — a touch,
+      // not a detonation.
+      pushForce({ x: p.x, y: p.y, vx: 0, vy: 0, dye: 0.22 * intensity, radius: 0.004 });
       for (let k = 0; k < 8; k++) {
         const ang = (k / 8) * Math.PI * 2;
         pushForce({
           x: p.x + Math.cos(ang) * 0.02, y: p.y + Math.sin(ang) * 0.02,
-          vx: Math.cos(ang) * 0.32, vy: Math.sin(ang) * 0.32,
-          dye: 0.16 * intensity, radius: 0.003,
+          vx: Math.cos(ang) * 0.14, vy: Math.sin(ang) * 0.14,
+          dye: 0.06 * intensity, radius: 0.003,
         });
       }
     }
@@ -330,17 +331,31 @@ export default function Bioluminescence({ intensity = 1 }: Props) {
     );
     io.observe(canvas);
 
-    // Ambient currents: two glow-fronts wandering like surge on a beach,
-    // so the water breathes even before anyone touches it.
+    // Ambient currents carry the scene (the cursor only whispers): four
+    // glow-fronts wander on incommensurate orbits like surge working a
+    // beach, and a broad band drifts through on a slow period, so the
+    // water visibly breathes on its own.
     function ambient(t: number) {
-      for (let i = 0; i < 2; i++) {
-        const ph = i * 2.6;
-        const x = 0.5 + 0.40 * Math.sin(t * 0.071 + ph) * Math.cos(t * 0.043 + ph * 1.7);
-        const y = 0.5 + 0.36 * Math.sin(t * 0.053 + ph * 1.3);
-        const vx = Math.cos(t * 0.071 + ph) * 0.22;
-        const vy = Math.cos(t * 0.053 + ph * 1.3) * 0.18;
-        pushForce({ x, y, vx, vy, dye: 0.032 * intensity, radius: 0.02 });
+      for (let i = 0; i < 4; i++) {
+        const ph = i * 1.9;
+        // Each front patrols its own neighborhood so the glow stays spread
+        // across the scene instead of pooling into one bright mass.
+        const cx = 0.18 + 0.64 * ((i * 0.318 + 0.13) % 1);
+        const cy = 0.30 + 0.40 * ((i * 0.471 + 0.29) % 1);
+        const x = cx + 0.16 * Math.sin(t * (0.057 + i * 0.012) + ph) * Math.cos(t * 0.041 + ph * 1.7);
+        const y = cy + 0.14 * Math.sin(t * (0.047 + i * 0.009) + ph * 1.3);
+        const vx = Math.cos(t * (0.057 + i * 0.012) + ph) * 0.26;
+        const vy = Math.cos(t * (0.047 + i * 0.009) + ph * 1.3) * 0.20;
+        pushForce({ x, y, vx, vy, dye: 0.008 * intensity, radius: 0.045 });
       }
+      // The surge: a wide luminous front that crosses every ~50s, the
+      // "wave rolling in" from the long-exposure beach photos.
+      const sx = (t * 0.02 + 0.1) % 1.2 - 0.1;
+      pushForce({
+        x: sx, y: 0.42 + 0.18 * Math.sin(t * 0.11),
+        vx: 0.10, vy: 0.03 * Math.sin(t * 0.23),
+        dye: 0.006 * intensity, radius: 0.08,
+      });
     }
 
     const start = performance.now();
