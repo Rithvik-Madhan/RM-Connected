@@ -79,5 +79,18 @@ const { posts = [] } = Astro.props as Props;
         </RevealOnScroll>
       ))}
     </div>
+
+    <RevealOnScroll client:visible delay={0.1}>
+      <div class="mt-28 flex justify-center">
+        <a
+          href="/blog"
+          class="group inline-flex items-center gap-3 rounded-full font-display font-semibold tracking-tight transition-all duration-300 hover:gap-5 hover:brightness-110"
+          style="font-size: clamp(1.15rem, 2.2vw, 1.6rem); padding: clamp(0.9rem, 1.6vw, 1.25rem) clamp(2rem, 3.6vw, 3rem); background: var(--d-accent); color: #06121F; box-shadow: 0 0 0 1px rgba(123,255,177,0.4), 0 18px 50px -12px rgba(123,255,177,0.45);"
+        >
+          My Writings
+          <span class="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </RevealOnScroll>
   </div>
 </section>

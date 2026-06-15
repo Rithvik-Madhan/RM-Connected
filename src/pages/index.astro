@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import DiveHero from '../components/hero/DiveHero.astro';
+import { getPost } from '../data/posts';
 
 const featuredPhotos = [
   { src: '/hero-underwater-shark.jpg', alt: 'Shark from a deep shore dive', caption: 'Catalina · 18m' },
@@ -14,32 +15,21 @@ const achievements = [
   { title: 'Mile Swim Award', organization: 'BSA', date: '2025', description: '34 consecutive laps at 5:30 AM at over 5000 ft of elevation.' },
   { title: 'District Honor Band', organization: 'ABCUSD', date: '2024 & 2025', description: 'Two-time flute section leader.' },
 ];
-const featuredPosts = [
-  {
-    href: '/blog/1',
-    title: 'On wonder, and what brought me to the water.',
-    excerpt: 'A first essay on why marine biology became the through-line of everything I do — and why I keep going back down.',
-    image: '/emerald-bay-diving.jpg',
-    category: 'Marine Biology',
-    date: '2025',
-  },
-  {
-    href: '/blog/3',
-    title: 'Notes from a night dive at La Jolla.',
-    excerpt: 'Things only show themselves when the sun is gone. A short field log from a summer night dive.',
-    image: '/night-diving-light.jpg',
-    category: 'Diving',
-    date: '2025',
-  },
-  {
-    href: '/blog/5',
-    title: 'Sequoia, after the fire.',
-    excerpt: 'A backpacking trip through a forest that was learning to come back. Notes on conservation, slowness, and the privilege of access.',
-    image: '/sequoia-misty.jpg',
-    category: 'Conservation',
-    date: '2024',
-  },
-];
+// Featured writing on the homepage. Derived from the canonical post data
+// (src/data/posts.ts) so titles, excerpts, images, and links can never drift
+// out of sync with the posts they actually open.
+const featuredSlugs = ['1', '3', '5'];
+const featuredPosts = featuredSlugs.map((slug) => {
+  const post = getPost(slug)!;
+  return {
+    href: `/blog/${post.slug}`,
+    title: post.title,
+    excerpt: post.lede,
+    image: post.image,
+    category: post.category,
+    date: new Date(post.date + 'T00:00:00').getFullYear().toString(),
+  };
+});
 ---
 <Layout title="Rithvik Madhan" cinematic zone="sunlit">
   <DiveHero {achievements} {featuredPhotos} {featuredPosts} />
